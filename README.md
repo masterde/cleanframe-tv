@@ -59,6 +59,66 @@ CleanFrame TV should now appear whenever you press Home. The [install guide](doc
   `adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME`.
 - Uninstalling (`adb uninstall io.github.mdrzn.cleanframetv`) also hands Home back to another installed launcher.
 
+### Reverting the TV tuning
+
+The steps below undo everything done to one TCL Android TV (2 GB RAM) while setting up this build: the debloat, the animation speed, the Home switch, the Play Store setting and the CleanFrame TV extras. Each step is independent, so you can undo only some of them. Connect first with `adb connect <tv-address>:5555` (use `adb -s <tv-address>:5555 ...` if more than one device is attached). If adb says "No route to host" while the TV is reachable, run `adb kill-server` and connect again.
+
+**1. Apps disabled to free memory.** These were turned off for the current user with `pm disable-user --user 0`. This brings them all back:
+
+```sh
+for p in \
+  com.google.android.tvlauncher com.google.android.tvrecommendations \
+  com.google.android.tungsten.setupwraith com.google.android.katniss \
+  com.google.android.music com.google.android.play.games \
+  com.google.android.apps.tachyon com.google.android.feedback \
+  com.google.android.tv.bugreportsender \
+  com.tcl.bi com.tcl.appmarket2 com.tcl.messagebox com.tcl.usercenter \
+  com.tcl.esticker com.tcl.notereminder com.tcl.showmode com.tcl.tvweishi \
+  com.tcl.copydatatotv com.tcl.MultiScreenInteraction_TV com.tcl.waterfall.overseas
+do adb shell pm enable --user 0 "$p"; done
+```
+
+What each group was: `com.google.android.tvlauncher` is the stock Google TV home screen (see step 4); `com.google.android.katniss` is Google search and the Assistant, so voice search and the microphone button stop working while it is off; `com.google.android.tungsten.setupwraith` is the setup wizard; the `com.tcl.*` entries are TCL's own services and shop. To bring back only one, run `adb shell pm enable --user 0 <package>`. `adb shell pm list packages -d` lists everything currently disabled, and that list also contains apps the TV's maker disabled before you started, which you should leave alone.
+
+**2. ZEE5 removed.** `com.graymatrix.did` was removed for the current user with `pm uninstall --user 0`. Restore it with:
+
+```sh
+adb shell cmd package install-existing com.graymatrix.did
+```
+
+If that reports the package is not installed, install ZEE5 again from the Play Store.
+
+**3. Animation speed.** The three animation scales were set to 0.5 (faster). Back to the default:
+
+```sh
+adb shell settings put global window_animation_scale 1.0
+adb shell settings put global transition_animation_scale 1.0
+adb shell settings put global animator_duration_scale 1.0
+```
+
+**4. Home screen.** Re-enable the stock launcher (step 1 does this), then find its name and make it the home screen:
+
+```sh
+adb shell pm enable --user 0 com.google.android.tvlauncher
+adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+adb shell cmd package set-home-activity <component from the line above>
+```
+
+The resolve command lists the launcher Android would use now. If it still names CleanFrame TV, press Home once and pick the stock launcher in the chooser, or use **Settings → Android TV → Previous launcher** on the TV.
+
+**5. This build.** Builds you compile yourself are signed with a debug key, so the official release APK cannot be installed over them. To switch back to the release, uninstall first and then install it (Settings and photos are lost; the Photo source and Home apps can be set again from the TV):
+
+```sh
+adb uninstall io.github.mdrzn.cleanframetv
+adb install CleanFrameTV-<version>.apk
+```
+
+**6. Play Store updates.** Automatic app updates were turned off. To turn them on again: Play Store → profile icon → **Settings → Auto-update apps → Auto-update apps at any time**. The Play Store's background updater is one of the larger memory users, which is why it was turned off.
+
+**7. Weather.** Weather is off until you set a place. To turn it off again, open **Settings → Layout → Weather → Location**, clear the text and save. Nothing else on the TV changed for it.
+
+Clearing background apps with `adb shell am kill-all` changes no setting, so there is nothing to undo.
+
 ## Configure
 
 Everything can be changed with the remote in **Settings**: background and photo source, layout, clock, typography, focus style, Apps on Home, and the Android TV group (TV settings, remote buttons, previous launcher).
