@@ -1112,7 +1112,7 @@
 
   /* ---------- Rendering ---------- */
   var $ = function (id) { return document.getElementById(id); };
-  var stage = $('stage'), homeEl = $('home'), caption = $('caption'), utilsEl = $('utils'), photoCaptionEl = $('photoCaption');
+  var stage = $('stage'), homeEl = $('home'), caption = $('caption'), wxZone = $('wxZone'), prZone = $('prZone'), utilsEl = $('utils'), photoCaptionEl = $('photoCaption');
   var utilFocusLabel = $('utilFocusLabel'), utilFocusKey = '', appFocusName = $('appFocusName');
   var dock = $('dock'), shelf = $('shelf'), track = $('track'), plate = $('plate'), matScrim = $('matScrim'), dockEmpty = $('dockEmpty');
   var cueL = $('cueL'), cueR = $('cueR'), dockAction = $('dockAction');
@@ -1241,13 +1241,14 @@
   }
   /* "Monday, 26 October" */
   function dateText() { var d = new Date(); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
-  /* "[icon] 26° Sunny · 24°–34° · Bahrain" when the owner set a place. */
-  function weatherHtml() {
-    var w = FrameDevice.weather ? FrameDevice.weather() : null, words, text;
+  /* Weather zone: "[icon] 26°", "Sunny · 24°–34°", "Bahrain" (when the owner set a place). */
+  function weatherZoneHtml() {
+    var w = FrameDevice.weather ? FrameDevice.weather() : null, words;
     if (!w) return '';
     words = weatherWords(w.code, w.day);
-    text = degrees(w.temp) + (words ? ' ' + words : '') + (typeof w.hi === 'number' && typeof w.lo === 'number' ? ' · ' + degrees(w.lo) + '–' + degrees(w.hi) : '') + (w.place ? ' · ' + w.place : '');
-    return weatherIcon(w.code, w.day) + '<span>' + esc(text) + '</span>';
+    return '<span class="wx-temp">' + weatherIcon(w.code, w.day) + '<span>' + degrees(w.temp) + '</span></span>'
+      + '<span class="wx-sub">' + esc(words + (typeof w.hi === 'number' && typeof w.lo === 'number' ? (words ? ' · ' : '') + degrees(w.lo) + '–' + degrees(w.hi) : '')) + '</span>'
+      + (w.place ? '<span class="wx-place">' + esc(w.place) + '</span>' : '');
   }
   /* "15 Jumada I 1448 AH" (Umm al-Qura calendar; it can differ by a day from local moon sighting), or '' when the WebView lacks it. */
   function hijriText() {
@@ -1273,11 +1274,10 @@
     parts = String(p.next).split(':'); at = +parts[0] * 60 + +parts[1];
     return isNaN(at) ? '' : 'Fajr in ' + duration(1440 - now + at);
   }
-  function extraText() {
-    var parts = [], hijri = S.c.hijri === 'on' ? hijriText() : '', prayer = S.c.prayer === 'on' ? prayerText() : '';
-    if (hijri) parts.push(hijri);
-    if (prayer) parts.push(prayer);
-    return parts.join(' · ');
+  /* Prayer zone: the Hijri date, then the next prayer; each only when turned on. */
+  function prayerZoneHtml() {
+    var hijri = S.c.hijri === 'on' ? hijriText() : '', prayer = S.c.prayer === 'on' ? prayerText() : '';
+    return (hijri ? '<span class="pr-sub">' + esc(hijri) + '</span>' : '') + (prayer ? '<span class="pr-main">' + esc(prayer) + '</span>' : '');
   }
   /* Night mode (Auto): from sunset to sunrise by the weather, else 22:00 to 06:00. */
   function nightNow() {
@@ -1290,10 +1290,10 @@
   }
   function syncPrayer() { if (FrameDevice.setPrayerEnabled) FrameDevice.setPrayerEnabled(S.c.prayer === 'on'); }
   function renderCaption(t, hs) {
-    var weather = weatherHtml(), extra = extraText();
-    var html = '<span class="clock">' + clockHtml() + '</span><span class="cap-line cap-date">' + esc(dateText()) + '</span>'
-      + (weather ? '<span class="cap-line cap-date cap-weather">' + weather + '</span>' : '') + (extra ? '<span class="cap-line cap-date">' + esc(extra) + '</span>' : '');
+    var html = '<span class="clock">' + clockHtml() + '</span><span class="cap-line cap-date">' + esc(dateText()) + '</span>';
     syncPrayer();
+    setHTML(wxZone, weatherZoneHtml());
+    setHTML(prZone, prayerZoneHtml());
     if (S.c.apps !== 'icons' && hs.items[hs.i] && (S.c.layout === 'list' ? photoLabel(hs.items[hs.i].id, false).size < 88 || photoLabel(hs.items[hs.i].id, false).ellipsis : hs.zone === 'apps' && reducedDockLabel(hs.items[hs.i].id))) html += '<span class="cap-line full-name">' + esc(app(hs.items[hs.i].id).name) + '</span>';
     setHTML(caption, html);
   }
