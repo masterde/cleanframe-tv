@@ -114,6 +114,8 @@ Choose an assigned button to change what it opens or to remove it. Arrows, OK, B
 
    If other services were listed, join them with `:` instead of replacing them.
 
+**TCL quick-launch button.** On TCL TVs this button has no Android key code. TCL's key service announces it with the `tcl.sys.intent.action.TKey` broadcast and opens its own screen (`com.tcl.partnercustomizer`, often a "Coming soon" page). CleanFrame TV listens for that broadcast while the remote buttons service is on, so **Add a button** learns it like any other button (shown as "Button 4020"). To stop TCL's screen opening, turn that app off: `adb shell pm disable-user --user 0 com.tcl.partnercustomizer` (undo with `pm enable --user 0`). Without the service, or with the button unassigned, the button then does nothing.
+
 Test with the physical remote: keys sent with `adb shell input keyevent` bypass accessibility services and still reach the TV's own handler. Turn debug mode off again with `--ez debug false`.
 
 The service acts only on the assigned keycodes. Every other key passes through unchanged; it stores nothing and cannot read the screen.

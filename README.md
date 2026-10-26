@@ -74,11 +74,12 @@ for p in \
   com.google.android.tv.bugreportsender \
   com.tcl.bi com.tcl.appmarket2 com.tcl.messagebox com.tcl.usercenter \
   com.tcl.esticker com.tcl.notereminder com.tcl.showmode com.tcl.tvweishi \
-  com.tcl.copydatatotv com.tcl.MultiScreenInteraction_TV com.tcl.waterfall.overseas
+  com.tcl.copydatatotv com.tcl.MultiScreenInteraction_TV com.tcl.waterfall.overseas \
+  com.tcl.partnercustomizer
 do adb shell pm enable --user 0 "$p"; done
 ```
 
-What each group was: `com.google.android.tvlauncher` is the stock Google TV home screen (see step 4); `com.google.android.katniss` is Google search and the Assistant, so voice search and the microphone button stop working while it is off; `com.google.android.tungsten.setupwraith` is the setup wizard; the `com.tcl.*` entries are TCL's own services and shop. To bring back only one, run `adb shell pm enable --user 0 <package>`. `adb shell pm list packages -d` lists everything currently disabled, and that list also contains apps the TV's maker disabled before you started, which you should leave alone.
+What each group was: `com.google.android.tvlauncher` is the stock Google TV home screen (see step 4); `com.google.android.katniss` is Google search and the Assistant, so voice search and the microphone button stop working while it is off; `com.google.android.tungsten.setupwraith` is the setup wizard; the `com.tcl.*` entries are TCL's own services and shop. `com.tcl.partnercustomizer` is TCL's quick-launch button screen (the "Coming soon" page); with it back on, that button opens it again unless you assigned the button to an app in CleanFrame TV (see Remote buttons). To bring back only one, run `adb shell pm enable --user 0 <package>`. `adb shell pm list packages -d` lists everything currently disabled, and that list also contains apps the TV's maker disabled before you started, which you should leave alone.
 
 **2. ZEE5 removed.** `com.graymatrix.did` was removed for the current user with `pm uninstall --user 0`. Restore it with:
 
