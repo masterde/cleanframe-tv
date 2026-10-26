@@ -14,5 +14,9 @@
   "home": "CleanFrame original utility outline, 24px grid / 1.6px stroke",
   "jellyfin": "https://raw.githubusercontent.com/simple-icons/simple-icons/4d29a35c954699b389a834aacc97dd6e7e74143c/icons/jellyfin.svg",
   "twitch": "https://raw.githubusercontent.com/simple-icons/simple-icons/4d29a35c954699b389a834aacc97dd6e7e74143c/icons/twitch.svg",
-  "nintendoswitch": "Original glyph drawn for CleanFrame TV (two controllers); not a Nintendo trademark. MIT, same as the project."
+  "nintendoswitch": "Original glyph drawn for CleanFrame TV (two controllers); not a Nintendo trademark. MIT, same as the project.",
+  "shahid": "https://raw.githubusercontent.com/elax46/custom-brand-icons/main/icon-svg/shahid.svg (MIT; recoloured white)",
+  "osnplus": "https://commons.wikimedia.org/wiki/File:OSN%2B_logo.svg (public domain; Inkscape metadata removed, recoloured white)",
+  "stctv": "https://www.stc.com.sa header wordmark (recoloured white; label disambiguates stc tv)",
+  "putio": "https://put.io/_astro/logo-retro-dark.Cf3lr7jL.svg (first subpath only: the pixel \"p\" mark; viewBox cropped, recoloured white)"
 }

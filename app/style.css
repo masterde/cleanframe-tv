@@ -511,6 +511,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .detail-focus .setting-section+.setting-section{margin-top:64px}
 /* Background (with Photo source) and Layout (with Clock) hold four sections: keep them clear of the OK hint at 968px. */
 .detail-background .setting-section+.setting-section{margin-top:20px}
+.detail-background .appearance-rows{height:716px;overflow:hidden}
+.detail-background .setting-copy{min-width:0}
+.detail-background .setting-section:not(.is-horizontal) .setting-name,.detail-background .setting-description{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .detail-background .setting-label{margin-bottom:8px}
 .detail-background .setting-choice{min-height:74px}
 .detail-background .is-horizontal .setting-choice{min-height:80px}

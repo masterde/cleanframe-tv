@@ -31,6 +31,8 @@ class HomeActivity : Activity() {
     private lateinit var catalog: AndroidCatalog
     private lateinit var photos: Photos
     private lateinit var feed: BingFeed
+    private lateinit var pexels: PexelsFeed
+    private lateinit var upload: UploadServer
     private lateinit var bridge: Bridge
     private var web: WebView? = null
     private var pageReady = false
@@ -54,7 +56,9 @@ class HomeActivity : Activity() {
         catalog = AndroidCatalog(this)
         photos = Photos(this)
         feed = BingFeed(this, photos) { event("cleanframe:photos-updated") }
-        bridge = Bridge(this, catalog, photos, feed)
+        pexels = PexelsFeed(this, photos) { event("cleanframe:photos-updated") }
+        upload = UploadServer(this, photos, pexels) { event("cleanframe:photos-updated") }
+        bridge = Bridge(this, catalog, photos, feed, pexels)
         takeDebug(intent)
         takeConfig(intent)
         createWebView()
@@ -140,6 +144,7 @@ class HomeActivity : Activity() {
         web?.onResume()
         web?.requestFocus()
         feed.refresh(force = false)
+        pexels.refresh(force = false)
     }
 
     override fun onPause() {
@@ -168,8 +173,41 @@ class HomeActivity : Activity() {
         if (forwarded) { super.onDestroy(); return }
         unregisterReceiver(packages)
         feed.close()
+        pexels.close()
+        upload.stop()
         web?.destroy()
         super.onDestroy()
+    }
+
+    /** Pexels keywords, typed with the TV keyboard. */
+    fun editKeywords() {
+        val field = android.widget.EditText(this).apply {
+            setText(pexels.keywords); setSelection(text.length); setSingleLine(true)
+            hint = "mountains, ocean, city at night"
+        }
+        val box = android.widget.FrameLayout(this).apply { setPadding(64, 24, 64, 0); addView(field) }
+        android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Pexels keywords")
+            .setMessage("Separate keywords with commas. Home cycles through them.")
+            .setView(box)
+            .setPositiveButton("Save") { _, _ -> Thread { pexels.setKeywords(field.text.toString()); event("cleanframe:photos-updated") }.start() }
+            .setNegativeButton("Cancel", null)
+            .show()
+        field.requestFocus()
+    }
+
+    /** Opens the upload page for as long as this dialog is showing (at most 10 minutes). */
+    fun openUpload() {
+        val session = upload.start()
+        val message = if (session == null) "The TV isn’t connected to a local network." else
+            "On a computer or phone on the same Wi-Fi, open\n\n${session.url}\n\nand enter this code:\n\n${session.code.chunked(3).joinToString(" ")}\n\n" +
+                "Uploads appear in Background → Uploads. The page closes when you close this, or after 10 minutes."
+        android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Upload photos")
+            .setMessage(message)
+            .setPositiveButton("Done", null)
+            .setOnDismissListener { upload.stop() }
+            .show()
     }
 
     private fun isDefaultHome(): Boolean {

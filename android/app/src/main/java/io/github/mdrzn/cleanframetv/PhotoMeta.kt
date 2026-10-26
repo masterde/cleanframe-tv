@@ -7,8 +7,8 @@ package io.github.mdrzn.cleanframetv
  */
 data class PhotoMeta(val tone: String, val tr: String, val br: String, val frostVeil: Double, val clockMist: Boolean) {
 
-    fun entryJson(id: String, name: String, caption: String): String =
-        """{"id":${Catalog.quote(id)},"file":${Catalog.quote(id)},"base":"/photos/","name":${Catalog.quote(name)},"caption":${Catalog.quote(caption)},""" +
+    fun entryJson(id: String, name: String, caption: String, source: String = "bing"): String =
+        """{"id":${Catalog.quote(id)},"file":${Catalog.quote(id)},"base":"/photos/","source":${Catalog.quote(source)},"name":${Catalog.quote(name)},"caption":${Catalog.quote(caption)},""" +
             """"tone":"$tone","ut":{"tr":"$tr","br":"$br"},"frostVeil":$frostVeil,"listColumn":0,"dockQuiet":false,"clockMist":$clockMist}"""
 
     companion object {

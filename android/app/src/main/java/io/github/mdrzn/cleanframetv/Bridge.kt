@@ -8,7 +8,7 @@ import android.webkit.JavascriptInterface
  * window.CleanFrameAndroid — the only surface the web interface sees (app/device.js).
  * Methods are synchronous and run on a WebView binder thread.
  */
-class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed) {
+class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed, private val pexels: PexelsFeed) {
     @Volatile var pendingConfig: String? = null
 
     @JavascriptInterface fun appsJson(): String = Catalog.toJson(catalog.entries())
@@ -19,7 +19,11 @@ class Bridge(private val activity: HomeActivity, private val catalog: AndroidCat
     @JavascriptInterface fun is24Hour(): Boolean = DateFormat.is24HourFormat(activity)
     @JavascriptInterface fun photosJson(): String = photos.json()
     @JavascriptInterface fun refreshPhotos() { feed.refresh(force = true) }
-    @JavascriptInterface fun setPhotoSource(source: String) = feed.setSource(source)
+    @JavascriptInterface fun refreshSource(source: String) { if (source == PexelsFeed.PEXELS) pexels.refresh(force = true) else if (source == "bing") feed.refresh(force = true) }
+    @JavascriptInterface fun setPhotoSource(source: String) { feed.setSource(source); pexels.setSource(source) }
+    @JavascriptInterface fun pexelsKeywords(): String = pexels.keywords
+    @JavascriptInterface fun editKeywords() = activity.runOnUiThread { activity.editKeywords() }
+    @JavascriptInterface fun openUpload() = activity.runOnUiThread { activity.openUpload() }
     @JavascriptInterface fun buttonsJson(): String = Buttons.listJson(KeyRemapService.running, catalog.buttons(), ::buttonName)
 
     /** The next assignable key arrives as the `cleanframe:button-learned` event, with its code and name. */

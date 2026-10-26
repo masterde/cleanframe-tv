@@ -34,7 +34,7 @@ class PhotoMetaTest {
     @Test fun jsonEntryMatchesTheWallpaperCatalogueShape() {
         val json = PhotoMeta("dark", "mist", "light", 0.12, true).entryJson("bing-20261020", "Un lago", "Lago (© X)")
         assertEquals(
-            """{"id":"bing-20261020","file":"bing-20261020","base":"/photos/","name":"Un lago","caption":"Lago (© X)","tone":"dark","ut":{"tr":"mist","br":"light"},"frostVeil":0.12,"listColumn":0,"dockQuiet":false,"clockMist":true}""",
+            """{"id":"bing-20261020","file":"bing-20261020","base":"/photos/","source":"bing","name":"Un lago","caption":"Lago (© X)","tone":"dark","ut":{"tr":"mist","br":"light"},"frostVeil":0.12,"listColumn":0,"dockQuiet":false,"clockMist":true}""",
             json,
         )
     }

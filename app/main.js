@@ -28,7 +28,7 @@
   }
   function setPhotos(list) {
     var bing = (Array.isArray(list) ? list : []).filter(function (p) { return p && typeof p.id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/.test(p.id); });
-    ALL_WALLS = BUILTIN_WALLS.map(function (w) { return normWall(w, 'builtin'); }).concat(bing.map(function (p) { return normWall(p, 'bing'); }));
+    ALL_WALLS = BUILTIN_WALLS.map(function (w) { return normWall(w, 'builtin'); }).concat(bing.map(function (p) { return normWall(p, p.source === 'pexels' || p.source === 'mine' ? p.source : 'bing'); }));
     WALLS_SOURCE = null; useSource(WALLS.length ? WALLS[0].source : 'builtin');
   }
   function sourceWalls(source) { return ALL_WALLS.filter(function (w) { return w.source === source; }); }
@@ -59,9 +59,9 @@
   };
   var PRIVATE_FONTS = window.CleanFramePrivateFontIDs || [], fontMetrics = {}, unavailableFonts = {}, widthCache = {}, fontsReady = false;
   var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source'];
-  var LOOK_VALUES = { clock: ['24', '12'], source: ['builtin', 'bing'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
+  var LOOK_VALUES = { clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
   var LOOK_NAMES = { bg: 'Background', layout: 'Layout', apps: 'Apps', font: 'Font', controls: 'Home controls', focus: 'Focus', material: 'Material' };
-  var VALUE_NAMES = { '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', icons: 'Icons', both: 'Icons and text', text: 'Text' };
+  var VALUE_NAMES = { '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', icons: 'Icons', both: 'Icons and text', text: 'Text' };
   var UTIL = { photo: ['Photo mode', 'photo'], apps: ['All apps', 'apps'], arrange: ['Arrange', 'arrange'], settings: ['Settings', 'settings'] };
   var MSG = {};
   var SVG = {
@@ -899,8 +899,11 @@
     function options(axis, values, disabled) { return values.map(function (value) { return choice(axis, value, disabled); }); }
     if (t.group === 'background') return [
       { id: 'bg', title: 'Background type', items: options('bg', ['photo', 'light', 'dark']) },
-      { id: 'source', title: 'Photo source', horizontal: true, items: options('source', ['builtin', 'bing'], flat),
-        reason: !flat && S.c.source === 'bing' && !sourceWalls('bing').length ? 'Bing photos appear after the first download.' : '' },
+      { id: 'source', title: 'Photo source', horizontal: true, items: options('source', ['builtin', 'bing', 'pexels', 'mine'], flat),
+        reason: flat || sourceWalls(S.c.source).length || S.c.source === 'builtin' ? '' : S.c.source === 'mine' ? 'Upload photos to see them here.' : VALUE_NAMES[S.c.source] + ' photos appear after the first download.' },
+      { id: 'photos', title: 'Your photos', items: [
+        { action: 'background.keywords', label: 'Pexels keywords', description: FrameDevice.pexelsKeywords ? FrameDevice.pexelsKeywords() : '' },
+        { action: 'background.upload', label: 'Upload photos', description: 'From a computer or phone on the same Wi-Fi' }] },
       { id: 'wall', title: 'Wallpaper', items: [{ action: 'background.wallpaper', label: wall(S.c.wall).name, thumbnail: true, disabled: flat }] },
       { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }], reason: flat ? 'Choose Photo to use wallpaper and rotation.' : '' }
     ];
@@ -984,10 +987,12 @@
       if (error && error.row === 'mode') applyRotation(error.patch.mode);
       else if (error) setLook(error.patch, { row: error.row });
     } else if (item.axis === 'mode') applyRotation(item.value);
-    else if (item.axis === 'source') { if (item.value === 'bing' && FrameDevice.refreshPhotos) FrameDevice.refreshPhotos(); setLook({ source: item.value, wall: wallFor(item.value, S.c.wall) }, { row: 'source' }); }
+    else if (item.axis === 'source') { if ((item.value === 'bing' || item.value === 'pexels') && FrameDevice.refreshSource) FrameDevice.refreshSource(item.value); setLook({ source: item.value, wall: wallFor(item.value, S.c.wall) }, { row: 'source' }); }
     else if (item.axis) { patch[item.axis] = item.value; setLook(patch, { row: item.axis }); }
     else if (item.action === 'background.wallpaper') openWallpaper();
     else if (item.action === 'background.rotation') openAppearance('rotation');
+    else if (item.action === 'background.keywords') perform('Pexels keywords', FrameDevice.editKeywords);
+    else if (item.action === 'background.upload') perform('Upload photos', FrameDevice.openUpload);
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
     else if (item.action === 'android.buttons') openAppearance('buttons');
@@ -1527,6 +1532,7 @@
         }).join('') + '</div>'
         + (section.reason ? '<p class="setting-reason">' + esc(section.reason) + '</p>' : '') + '</section>';
     }).join(''));
+    keepInView(appearanceRows);
     if (S.pending) status = '<p>Loading ' + esc(S.pending.row === 'font' ? FONTS[S.pending.target.font].name : 'your choice') + '…</p><p>Back cancels this change.</p>';
     else if (error) {
       status = '<p class="setting-error">' + (error.type === 'save' ? 'Couldn’t save this change.' : error.type === 'font' ? 'Couldn’t load ' + esc(FONTS[error.font].name) + '.' : 'Couldn’t load this appearance.') + ' Your current choice is kept.</p>'
@@ -1537,6 +1543,15 @@
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
       : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
+  }
+  /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
+  function keepInView(list) {
+    var f = list.querySelector('.is-focus'), top, bottom, margin = 24;
+    if (!f || list.scrollHeight <= list.clientHeight) { list.scrollTop = 0; return; }
+    top = f.offsetTop; bottom = top + f.offsetHeight;
+    if (f.closest) { var sec = f.closest('.setting-section'); if (sec && sec.offsetTop < top) top = sec.offsetTop; }
+    if (top - margin < list.scrollTop) list.scrollTop = Math.max(0, top - margin);
+    else if (bottom + margin > list.scrollTop + list.clientHeight) list.scrollTop = bottom + margin - list.clientHeight;
   }
   function renderWallpaper(t) {
     V.wallpaper.norm(t);
@@ -2017,7 +2032,7 @@
     var current = wall(S.c.wall), target;
     setPhotos(FrameDevice.photos ? FrameDevice.photos() : []); useSource(S.c.source);
     target = wallFor(S.c.source, current && wall(current.id) ? current.id : '');
-    if (!current || !wall(current.id) || (S.c.source === 'bing' && current.source !== 'bing')) setLook({ wall: target }, { row: 'bg' });
+    if (!current || !wall(current.id) || (S.c.source !== 'builtin' && current.source !== S.c.source && sourceWalls(S.c.source).length)) setLook({ wall: target }, { row: 'bg' });
     else render();
   });
   /* Called by the Android shell when the remote's Home button is pressed while Home is already open. */

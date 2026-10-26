@@ -6,7 +6,7 @@
     { id: 'primevideo', name: 'Prime Video', packages: ['com.amazon.amazonvideo.livingroom', 'com.amazon.avod.thirdpartyclient'] },
     { id: 'youtube', name: 'YouTube', packages: ['org.smarttube.stable', 'org.smarttube.beta', 'com.teamsmart.videomanager.tv', 'com.google.android.youtube.tv'] },
     { id: 'netflix', name: 'Netflix', packages: ['com.netflix.ninja'] },
-    { id: 'disneyplus', name: 'Disney+', packages: ['com.disney.disneyplus'] },
+    { id: 'disneyplus', name: 'Disney+', packages: ['com.disney.disneyplus', 'com.disneyplus.mea'] },
     { id: 'jellyfin', name: 'Jellyfin', packages: ['org.jellyfin.androidtv', 'com.github.damontecres.wholphin'] },
     { id: 'twitch', name: 'Twitch', packages: ['com.s0und.s0undtv', 'tv.twitch.android.app'] },
     { id: 'appletv', name: 'Apple TV', packages: ['com.apple.atve.androidtv.appletv'] },
@@ -14,6 +14,10 @@
     { id: 'spotify', name: 'Spotify', packages: ['com.spotify.tv.android'] },
     { id: 'hbomax', name: 'HBO Max', packages: ['com.wbd.stream', 'com.hbo.hbonow'] },
     { id: 'tubi', name: 'Tubi', packages: ['com.tubitv'] },
+    { id: 'shahid', name: 'Shahid', packages: ['net.mbc.shahidTV'] },
+    { id: 'osnplus', name: 'OSN+', packages: ['com.osn.go'] },
+    { id: 'stctv', name: 'stc tv', packages: ['com.intigral.jawwytv'] },
+    { id: 'putio', name: 'put.io', packages: ['io.put.putio'] },
     { id: 'nintendoswitch', name: 'Nintendo Switch', input: /switch/i }
   ];
   var PREVIEW = 'Preview: opening apps needs the TV.';
@@ -154,6 +158,11 @@
     try { b.setPhotoSource(String(source)); sentSource = source; } catch (e) {}
   }
   function refreshPhotos() { var b = bridge(); if (b) try { b.refreshPhotos(); } catch (e) {} }
+  /* Downloads now for 'bing' or 'pexels' (Pexels goes through the owner's search function). */
+  function refreshSource(source) { var b = bridge(); if (b) try { if (b.refreshSource) b.refreshSource(String(source)); else b.refreshPhotos(); } catch (e) {} }
+  function pexelsKeywords() { var b = bridge(); try { return b && b.pexelsKeywords ? String(b.pexelsKeywords()) : 'landscape, nature'; } catch (e) { return ''; } }
+  function editKeywords(done) { var b = bridge(); if (!b || !b.editKeywords) { result(PREVIEW, done); return; } try { b.editKeywords(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
     if (!b) return null;
@@ -164,7 +173,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();

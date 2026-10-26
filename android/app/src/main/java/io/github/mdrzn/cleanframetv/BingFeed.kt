@@ -2,7 +2,6 @@ package io.github.mdrzn.cleanframetv
 
 import android.content.Context
 import android.util.Log
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -49,39 +48,23 @@ class BingFeed(private val context: Context, private val photos: Photos, private
         val locale = Locale.getDefault()
         val items = parse(String(get(feedUrl(locale.language, locale.country)), Charsets.UTF_8)).take(KEEP)
         if (items.isEmpty()) return false
-        val entries = LinkedHashMap<String, String>()
-        try {
-            val existing = JSONArray(photos.json())
-            for (i in 0 until existing.length()) existing.optJSONObject(i)?.let { entries[it.optString("id")] = it.toString() }
-        } catch (e: Exception) { /* rebuild */ }
-        var changed = false
-        for (item in items) {
-            if (entries.containsKey(item.id) && File(photos.root, "wallpapers/${item.id}.jpg").isFile) continue
-            val download = File(context.cacheDir, "${item.id}.download")
-            try {
-                download.writeBytes(get(item.url))
-                val meta = PhotoMaker.make(download, photos.root, item.id)
-                entries[item.id] = meta.entryJson(item.id, item.title, item.caption)
-                changed = true
-                Log.i(AndroidCatalog.TAG, "Bing photo ready: ${item.id} (${item.title})")
-            } finally {
-                download.delete()
+        return photos.update("bing-", KEEP) { entries ->
+            var changed = false
+            for (item in items) {
+                if (entries.containsKey(item.id) && photos.has(item.id)) continue
+                val download = File(context.cacheDir, "${item.id}.download")
+                try {
+                    download.writeBytes(get(item.url))
+                    val meta = PhotoMaker.make(download, photos.root, item.id)
+                    entries[item.id] = meta.entryJson(item.id, item.title, item.caption)
+                    changed = true
+                    Log.i(AndroidCatalog.TAG, "Bing photo ready: ${item.id} (${item.title})")
+                } finally {
+                    download.delete()
+                }
             }
+            changed
         }
-        val keep = entries.keys.sortedDescending().take(KEEP).toSet()
-        for (id in entries.keys.toList()) if (id !in keep) { entries.remove(id); deleteFiles(id); changed = true }
-        if (changed) {
-            val tmp = File(photos.root, "photos.json.tmp")
-            tmp.writeText(keep.sortedDescending().joinToString(",", "[", "]") { entries.getValue(it) })
-            tmp.renameTo(photos.catalogue)
-        }
-        return changed
-    }
-
-    private fun deleteFiles(id: String) {
-        listOf("wallpapers/$id.jpg", "wallpapers/$id-thumb.jpg", "wallpapers/$id-panel.jpg",
-            "materials/$id-field-blur.jpg", "materials/$id-field-frost.jpg", "materials/$id-field-clear.jpg", "materials/$id-study-soft.jpg")
-            .forEach { File(photos.root, it).delete() }
     }
 
     private fun get(url: String): ByteArray {

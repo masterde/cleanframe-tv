@@ -27,7 +27,13 @@ object PhotoMaker {
     fun make(source: File, root: File, id: String): PhotoMeta {
         val walls = File(root, "wallpapers").apply { mkdirs() }
         val mats = File(root, "materials").apply { mkdirs() }
-        val decoded = BitmapFactory.decodeFile(source.path, BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 })
+        // Large originals (Pexels, uploads) are subsampled while decoding so they never need more than ~2x the output in memory.
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(source.path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("Unreadable image")
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= W && bounds.outHeight / (sample * 2) >= H) sample *= 2
+        val decoded = BitmapFactory.decodeFile(source.path, BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888; inSampleSize = sample })
             ?: throw IOException("Unreadable image")
         val full = cover(decoded, W, H).also { if (it !== decoded) decoded.recycle() }
         save(full, File(walls, "$id.jpg"), 90)

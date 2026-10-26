@@ -46,10 +46,10 @@ adb shell am start -n io.github.mdrzn.cleanframetv/.HomeActivity --es config '{"
 
 | Key | Values |
 | --- | --- |
-| `home` | Up to nine Home entries, in order: a brand id (`primevideo`, `youtube`, `netflix`, `disneyplus`, `jellyfin`, `twitch`, `appletv`, `stremio`, `spotify`, `hbomax`, `tubi`, `nintendoswitch`), a package name such as `it.rainet.androidtv`, or an input id such as `input.hw6` |
+| `home` | Up to nine Home entries, in order: a brand id (`primevideo`, `youtube`, `netflix`, `disneyplus`, `jellyfin`, `twitch`, `appletv`, `stremio`, `spotify`, `hbomax`, `tubi`, `shahid`, `osnplus`, `stctv`, `putio`, `nintendoswitch`), a package name such as `it.rainet.androidtv`, or an input id such as `input.hw6` |
 | `inputNames` | Names for HDMI inputs: `{"input.hw5": "Nintendo Switch"}`. An empty name restores the TV's own label. |
 | `bg` | `photo`, `light`, `dark` |
-| `source` | `builtin` (bundled wallpapers, default) or `bing` (Bing photo of the day) |
+| `source` | `builtin` (bundled wallpapers, default), `bing` (Bing photo of the day), `pexels` (Pexels photos for your keywords) or `mine` (uploaded photos) |
 | `wall` | A bundled wallpaper (`misty`, `cove`, `forest`, `valley`, `night`, `peaks`, `bridge`, `ridge`, `golden`, `summit`, `goldcoast`, `sydney`, `amber`, `mint`, `alpine`) or a downloaded Bing photo (`bing-YYYYMMDD`) |
 | `mode` | Photo rotation: `fixed`, `open` (each time Home opens), `5`, `15`, `60` (minutes) |
 | `layout` | `list`, `dock` |
