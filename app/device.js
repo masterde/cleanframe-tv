@@ -162,6 +162,15 @@
   function refreshSource(source) { var b = bridge(); if (b) try { if (b.refreshSource) b.refreshSource(String(source)); else b.refreshPhotos(); } catch (e) {} }
   function pexelsKeywords() { var b = bridge(); try { return b && b.pexelsKeywords ? String(b.pexelsKeywords()) : 'landscape, nature'; } catch (e) { return ''; } }
   function editKeywords(done) { var b = bridge(); if (!b || !b.editKeywords) { result(PREVIEW, done); return; } try { b.editKeywords(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  /* Current weather {place, temp, code, day} for the owner's place, or null when weather is off or not downloaded yet. */
+  function weather() {
+    var b = bridge(), value;
+    if (!b || !b.weatherJson) return null;
+    try { value = parse(b.weatherJson(), null); } catch (e) { value = null; }
+    return value && typeof value.temp === 'number' && typeof value.code === 'number' ? value : null;
+  }
+  function weatherPlace() { var b = bridge(); try { return b && b.weatherPlace ? String(b.weatherPlace()) : ''; } catch (e) { return ''; } }
+  function editWeatherPlace(done) { var b = bridge(); if (!b || !b.editWeatherPlace) { result(PREVIEW, done); return; } try { b.editWeatherPlace(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
@@ -173,7 +182,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();

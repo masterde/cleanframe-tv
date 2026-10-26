@@ -33,6 +33,7 @@ class HomeActivity : Activity() {
     private lateinit var feed: BingFeed
     private lateinit var pexels: PexelsFeed
     private lateinit var upload: UploadServer
+    private lateinit var weather: WeatherFeed
     private lateinit var bridge: Bridge
     private var web: WebView? = null
     private var pageReady = false
@@ -58,7 +59,8 @@ class HomeActivity : Activity() {
         feed = BingFeed(this, photos) { event("cleanframe:photos-updated") }
         pexels = PexelsFeed(this, photos) { event("cleanframe:photos-updated") }
         upload = UploadServer(this, photos, pexels) { event("cleanframe:photos-updated") }
-        bridge = Bridge(this, catalog, photos, feed, pexels)
+        weather = WeatherFeed(this) { event("cleanframe:weather-updated") }
+        bridge = Bridge(this, catalog, photos, feed, pexels, weather)
         takeDebug(intent)
         takeConfig(intent)
         createWebView()
@@ -174,6 +176,7 @@ class HomeActivity : Activity() {
         unregisterReceiver(packages)
         feed.close()
         pexels.close()
+        weather.close()
         upload.stop()
         web?.destroy()
         super.onDestroy()
@@ -191,6 +194,23 @@ class HomeActivity : Activity() {
             .setMessage("Separate keywords with commas. Home cycles through them.")
             .setView(box)
             .setPositiveButton("Save") { _, _ -> Thread { pexels.setKeywords(field.text.toString()); event("cleanframe:photos-updated") }.start() }
+            .setNegativeButton("Cancel", null)
+            .show()
+        field.requestFocus()
+    }
+
+    /** Weather location, typed with the TV keyboard. Empty turns weather off. */
+    fun editWeatherPlace() {
+        val field = android.widget.EditText(this).apply {
+            setText(weather.place); setSelection(text.length); setSingleLine(true)
+            hint = "Bahrain"
+        }
+        val box = android.widget.FrameLayout(this).apply { setPadding(64, 24, 64, 0); addView(field) }
+        android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Weather location")
+            .setMessage("A city or country, such as Bahrain or Manama. Leave empty to turn weather off. Only this name is sent to Open-Meteo.")
+            .setView(box)
+            .setPositiveButton("Save") { _, _ -> weather.setPlace(field.text.toString()) }
             .setNegativeButton("Cancel", null)
             .show()
         field.requestFocus()

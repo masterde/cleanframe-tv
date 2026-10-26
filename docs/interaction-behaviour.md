@@ -4,9 +4,9 @@ Based on CleanFrame 0.6.1. Changes for Android TV: Photo mode replaces Art Mode,
 
 ## Home
 
-- Dock: Left/Right scrolls the apps without wrapping. Up enters the top-right controls, starting with Photo mode or the last selected control. Left/Right moves between Photo mode, All apps and Settings. Down or Back returns to the selected app. The clock is at the top left.
-- List: Up/Down scrolls the apps without wrapping. Right enters the bottom-right controls, aligned with the clock above. Up/Down moves between Photo mode, All apps and Settings. Left or Back returns to the selected app. The list fades at both ends as it scrolls.
-- OK opens the selected item. Focus alone never launches an app.
+- Dock: Left/Right scrolls the apps without wrapping. Up enters the top-right controls, starting with Photo mode or the last selected control. Left/Right moves between Photo mode, All apps and Settings, and moving past either end returns to the apps. Down or Back returns to the selected app. The clock is at the top left.
+- List: Up/Down scrolls the apps without wrapping. Right enters the bottom-right controls, aligned with the clock above. Up/Down moves between Photo mode, All apps and Settings, and moving past either end returns to the apps. Left or Back returns to the selected app. The list fades at both ends as it scrolls.
+- While the Home controls have focus, no app looks selected; the dock or list returns to the app you left when you go back. OK opens the selected item. Focus alone never launches an app.
 - On an app (Home or All apps), OK opens it when the key is released. Holding OK for 0.65 seconds closes that app instead and shows "Closed <app>." under it. All other controls act when OK goes down. Held OK and Back act once until the key is released.
 - Back on Home with the app selected does nothing: the launcher has nowhere to exit to. Back from the Home controls returns to the selected app.
 - Pressing Home while CleanFrame TV is showing closes any open panel and Photo mode and returns to Home.

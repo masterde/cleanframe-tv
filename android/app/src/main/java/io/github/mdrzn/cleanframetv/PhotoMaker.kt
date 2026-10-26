@@ -23,6 +23,8 @@ object PhotoMaker {
     private const val H = 1080
     private const val QW = W / 4
     private const val QH = H / 4
+    private const val MAX_SOURCE_PIXELS = 100_000_000L
+    private const val MAX_DECODE_PIXELS = 16_000_000L
 
     fun make(source: File, root: File, id: String): PhotoMeta {
         val walls = File(root, "wallpapers").apply { mkdirs() }
@@ -31,8 +33,11 @@ object PhotoMaker {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(source.path, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("Unreadable image")
+        if (bounds.outWidth.toLong() * bounds.outHeight > MAX_SOURCE_PIXELS) throw IOException("Image too large")
         var sample = 1
         while (bounds.outWidth / (sample * 2) >= W && bounds.outHeight / (sample * 2) >= H) sample *= 2
+        // Extreme aspect ratios stop the loop above early; keep the decoded bitmap within a fixed pixel budget.
+        while (bounds.outWidth.toLong() / sample * (bounds.outHeight / sample) > MAX_DECODE_PIXELS) sample *= 2
         val decoded = BitmapFactory.decodeFile(source.path, BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888; inSampleSize = sample })
             ?: throw IOException("Unreadable image")
         val full = cover(decoded, W, H).also { if (it !== decoded) decoded.recycle() }

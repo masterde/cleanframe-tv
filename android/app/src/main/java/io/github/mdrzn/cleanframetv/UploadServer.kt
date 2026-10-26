@@ -101,6 +101,8 @@ class UploadServer(private val context: Context, private val photos: Photos, pri
                         reply(out, 200, "application/json", """{"ok":true}""")
                     } catch (e: Exception) {
                         reply(out, 415, "application/json", """{"error":"That file isn’t a photo the TV can read (use JPEG, PNG or WebP)."}""")
+                    } catch (e: OutOfMemoryError) {
+                        reply(out, 413, "application/json", """{"error":"That photo is too large for the TV to process."}""")
                     } finally {
                         file.delete()
                     }

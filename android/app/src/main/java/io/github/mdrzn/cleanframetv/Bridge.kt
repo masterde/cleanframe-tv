@@ -8,7 +8,7 @@ import android.webkit.JavascriptInterface
  * window.CleanFrameAndroid — the only surface the web interface sees (app/device.js).
  * Methods are synchronous and run on a WebView binder thread.
  */
-class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed, private val pexels: PexelsFeed) {
+class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed, private val pexels: PexelsFeed, private val weather: WeatherFeed) {
     @Volatile var pendingConfig: String? = null
 
     @JavascriptInterface fun appsJson(): String = Catalog.toJson(catalog.entries())
@@ -23,6 +23,9 @@ class Bridge(private val activity: HomeActivity, private val catalog: AndroidCat
     @JavascriptInterface fun setPhotoSource(source: String) { feed.setSource(source); pexels.setSource(source) }
     @JavascriptInterface fun pexelsKeywords(): String = pexels.keywords
     @JavascriptInterface fun editKeywords() = activity.runOnUiThread { activity.editKeywords() }
+    @JavascriptInterface fun weatherJson(): String = weather.json()
+    @JavascriptInterface fun weatherPlace(): String = weather.place
+    @JavascriptInterface fun editWeatherPlace() = activity.runOnUiThread { activity.editWeatherPlace() }
     @JavascriptInterface fun openUpload() = activity.runOnUiThread { activity.openUpload() }
     @JavascriptInterface fun buttonsJson(): String = Buttons.listJson(KeyRemapService.running, catalog.buttons(), ::buttonName)
 

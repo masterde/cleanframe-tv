@@ -38,6 +38,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .caption{position:absolute;left:140px;top:72px;display:flex;flex-direction:column;gap:4px;max-width:1040px}
 .clock,.cap-title{font-size:48px;line-height:64px;font-weight:500;letter-spacing:-1.5px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.22)}
 .clock{font-variant-numeric:tabular-nums}
+.clock-ampm{margin-left:10px;font-size:26px;letter-spacing:0;font-weight:500;opacity:.78}
+.cap-date{font-weight:400;opacity:.9}
 .cap-line{max-width:100%;font-size:30px;line-height:40px;font-weight:500;letter-spacing:-.2px;color:rgba(255,255,255,.88);text-shadow:0 1px 2px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .warn{display:inline-flex;gap:12px;align-items:flex-start;color:var(--warn)}
 .warn .ico{width:30px;height:30px;margin-top:5px}
@@ -99,7 +101,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .track{position:absolute;left:0;top:0;height:232px;transition:transform var(--t) var(--ease);will-change:transform}
 .plate{position:absolute;left:0;top:16px;width:288px;height:200px;border-radius:32px;opacity:0;transition:transform var(--t) var(--ease),opacity 120ms linear;will-change:transform}
 .plate.on-focus{opacity:1;background:var(--plate);box-shadow:var(--plate-edge)}
-.plate.on-sel{opacity:1;background:rgba(255,255,255,.11)}
 .plate.on-lift{opacity:1;background:var(--lift);box-shadow:var(--plate-edge)}
 .m-frost .dock .plate.on-focus{background:linear-gradient(170deg,rgba(255,255,255,.26),rgba(255,255,255,.08) 58%,rgba(255,255,255,.10))}
 .m-frost .dock .plate.on-lift{background:linear-gradient(170deg,rgba(255,255,255,.34),rgba(255,255,255,.14) 58%,rgba(255,255,255,.16))}
@@ -119,7 +120,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .tile .t-name{position:absolute;left:12px;right:12px;top:72px;text-align:center;font-size:40px;line-height:56px;letter-spacing:-1px;font-weight:600;white-space:nowrap;overflow:hidden;opacity:.84;transition:opacity 160ms linear}
 .tile.is-focus .mark,.tile.is-focus .label,.tile.is-focus .t-name,.tile.is-lifted .mark,.tile.is-lifted .label,.tile.is-lifted .t-name{opacity:1}
 .tile.is-focus .mark,.tile.is-lifted .mark{transform:translateY(-3px) scale(1.04)}
-.tile.is-sel .mark,.tile.is-sel .label,.tile.is-sel .t-name{opacity:.94}
 .tile.k-ph .mark,.tile.k-ph .label,.tile.k-ph.is-focus .mark,.tile.k-ph.is-focus .label{opacity:.5;transform:none}
 .tile .add{position:absolute;left:116px;top:40px;width:56px;height:56px;opacity:.84}
 .tile .add .ico{width:56px;height:56px;stroke-width:1.4}
@@ -172,21 +172,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .ph-group{position:absolute;left:0;top:0;width:100%;height:100%;opacity:.8;transform-origin:28px 64px;transition:opacity 160ms linear,transform var(--t) var(--ease)}
 .ph-group .mark{position:absolute;left:28px;top:32px}
 .ph-name{position:absolute;left:128px;top:10px;max-width:992px;font-size:88px;line-height:104px;font-weight:600;letter-spacing:-1.8px;color:var(--ph-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(14,10,6,.32),0 3px 14px rgba(14,10,6,.24)}
-.f-glass .ph-row.is-focus .ph-group,.f-glass .ph-row.is-sel .ph-group{opacity:1}
+.f-glass .ph-row.is-focus .ph-group{opacity:1}
 .f-glass .ph-row.is-focus .ph-name,.ph-row.is-lifted .ph-name{text-shadow:0 1px 2px rgba(14,10,6,.22)}
 .f-type .ph-group{opacity:.62}
 .f-type .ph-row.is-focus .ph-group{opacity:1;transform:scale(1.05)}
 .f-type .ph-row.is-focus .ph-name{text-shadow:0 1px 2px rgba(14,10,6,.36),0 4px 18px rgba(14,10,6,.3)}
-.f-type .ph-row.is-sel .ph-group{opacity:.78;transform:none}
 .f-glass .ph-row.k-ph .ph-group,.f-type .ph-row.k-ph .ph-group{opacity:.5}
 .f-glass .ph-row.is-lifted .ph-group,.f-type .ph-row.is-lifted .ph-group{opacity:1;transform:none}
 .bg-photo .ph-group,.bg-photo.f-type .ph-group{opacity:.84}
-.bg-photo.f-type .ph-row.is-sel .ph-group{opacity:.92}
 .bg-photo.f-type .ph-row.is-focus .ph-group,.bg-photo.f-type .ph-row.is-lifted .ph-group{opacity:1}
 .bg-photo.f-type .ph-row.k-ph .ph-group{opacity:.5}
 .ph-plate{position:absolute;z-index:1;left:112px;top:0;width:360px;height:134px;border-radius:38px;overflow:hidden;opacity:0;transition:opacity 160ms linear}
 .ph-plate.on-focus,.ph-plate.on-lift{opacity:1}
-.ph-plate.on-sel{opacity:.5}
 .ph-plate.is-outgoing{opacity:0}
 .ph-plate.is-preparing{opacity:0!important;transition:none!important}
 .ph-field{position:absolute;left:0;top:0;width:1920px;height:1080px;transform:translate3d(-112px,0,0)}
@@ -424,13 +421,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .f-type .plate{opacity:0}
 .f-type .tile-content{opacity:.62}
 .f-type .tile.is-focus .tile-content{opacity:1;transform:scale(1.06)}
-.f-type .tile.is-sel .tile-content{opacity:.78}
 .f-type .tile.k-ph .tile-content{opacity:.5}
 .f-type .tile.is-lifted .tile-content{opacity:1;transform:none}
 .f-type .tile .mark,.f-type .tile .label{opacity:1;transform:none}
 .f-type .tile.is-press .mark{animation:none}
 .bg-photo.f-type .tile-content{opacity:.84}
-.bg-photo.f-type .tile.is-sel .tile-content{opacity:.92}
 .bg-photo.f-type .tile.is-focus .tile-content,.bg-photo.f-type .tile.is-lifted .tile-content{opacity:1}
 .bg-photo.f-type .tile.k-ph .tile-content{opacity:.5}
 /* Region classes are an offline classification, never runtime pixel sampling. */
@@ -512,6 +507,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 /* Background (with Photo source) and Layout (with Clock) hold four sections: keep them clear of the OK hint at 968px. */
 .detail-background .setting-section+.setting-section{margin-top:20px}
 .detail-background .appearance-rows{height:716px;overflow:hidden}
+.detail-layout .appearance-rows{height:700px;overflow:hidden}
 .detail-background .setting-copy{min-width:0}
 .detail-background .setting-section:not(.is-horizontal) .setting-name,.detail-background .setting-description{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .detail-background .setting-label{margin-bottom:8px}
@@ -547,7 +543,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 @media(prefers-reduced-motion:reduce){.wallpaper-rows{transition:none}}
 @media(prefers-reduced-motion:reduce){.panel-content,.ph-group,.tile-content,.u-content,.util-focus-label,.quiet-utils .u .ico{transform:none!important}.tile-content{transition:opacity 120ms linear!important}}
 
-.at-appearance .plate.on-sel,.at-wallpaper .plate.on-sel{opacity:.5;background:var(--plate);box-shadow:var(--plate-edge)}
 
 /* Header utilities share Type/Glass focus; commands keep their solid focus. */
 .s-head .btn,.header-utils .u{position:relative;background:none;color:var(--mute);box-shadow:none;transition:transform 140ms var(--ease),color 140ms linear}

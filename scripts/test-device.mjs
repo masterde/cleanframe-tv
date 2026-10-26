@@ -147,6 +147,19 @@ assert.deepEqual(plain(dev.buttons()), { enabled: false, buttons: [] });
 dev.learnButton((err) => { result = err; }); assert.match(result.message, /Preview/);
 dev.setButton(192, 'x', (err) => { result = err; }); assert.match(result.message, /Preview/);
 
+// Weather: only a complete reading counts; the preview and a failing bridge show none.
+dev = load(fakeBridge(installed, { weatherJson: () => '{"place":"Manama","temp":32,"code":1,"day":true}', weatherPlace: () => 'Bahrain' }));
+assert.deepEqual(plain(dev.weather()), { place: 'Manama', temp: 32, code: 1, day: true });
+assert.equal(dev.weatherPlace(), 'Bahrain');
+dev = load(fakeBridge(installed, { weatherJson: () => '' }));
+assert.equal(dev.weather(), null);
+dev = load(fakeBridge(installed, { weatherJson: () => '{"temp":"hot"}' }));
+assert.equal(dev.weather(), null);
+dev = load(null);
+assert.equal(dev.weather(), null);
+assert.equal(dev.weatherPlace(), '');
+dev.editWeatherPlace((err) => { result = err; }); assert.match(result.message, /Preview/);
+
 console.log('device.js adapter checks passed.');
 
 // No known brand installed: Home starts with the first installed apps (not inputs), unmarked.

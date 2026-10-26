@@ -581,8 +581,8 @@
       if (S.c.layout === 'list') { listHomeKey(t, k, i, U); return; }
       if (f.zone === 'util') {
         f.u = clamp(f.u, 0, U.length - 1);
-        if (k === x.prev && f.u > 0) f.u--;
-        else if (k === x.next && f.u < U.length - 1) f.u++;
+        if (k === x.prev) { if (f.u > 0) f.u--; else f.zone = 'apps'; }
+        else if (k === x.next) { if (f.u < U.length - 1) f.u++; else f.zone = 'apps'; }
         else if (k === x.inn || k === 'back') f.zone = 'apps';
         else if (k === 'ok') { S.lastUtil = f.u; utilAction(U[f.u]); return; }
         S.lastUtil = f.u;
@@ -608,8 +608,8 @@
     var f = t.f, h = S.c.home;
     if (f.zone === 'util') {
       f.u = clamp(f.u, 0, U.length - 1);
-      if (k === 'up' && f.u > 0) f.u--;
-      else if (k === 'down' && f.u < U.length - 1) f.u++;
+      if (k === 'up') { if (f.u > 0) f.u--; else f.zone = 'apps'; }
+      else if (k === 'down') { if (f.u < U.length - 1) f.u++; else f.zone = 'apps'; }
       else if (k === 'left' || k === 'back') f.zone = 'apps';
       else if (k === 'ok') { S.lastUtil = f.u; utilAction(U[f.u]); return; }
       S.lastUtil = f.u;
@@ -911,7 +911,8 @@
       { id: 'layout', title: 'Layout', horizontal: true, items: options('layout', ['list', 'dock']) },
       { id: 'apps', title: 'App display', horizontal: true, items: options('apps', ['text', 'icons', 'both']) },
       { id: 'controls', title: 'Home controls', horizontal: true, items: options('controls', ['text', 'icons', 'both']) },
-      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) }
+      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) },
+      { id: 'weather', title: 'Weather', items: [{ action: 'layout.weather', label: 'Location', description: FrameDevice.weatherPlace && FrameDevice.weatherPlace() || 'Off. Enter a city to show the weather under the clock' }] }
     ];
     if (t.group === 'typography') return [{ id: 'font', title: '', items: options('font', LOOK_VALUES.font) }];
     if (t.group === 'focus') return [
@@ -992,6 +993,7 @@
     else if (item.action === 'background.wallpaper') openWallpaper();
     else if (item.action === 'background.rotation') openAppearance('rotation');
     else if (item.action === 'background.keywords') perform('Pexels keywords', FrameDevice.editKeywords);
+    else if (item.action === 'layout.weather') perform('Weather location', FrameDevice.editWeatherPlace);
     else if (item.action === 'background.upload') perform('Upload photos', FrameDevice.openUpload);
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
@@ -1177,17 +1179,41 @@
     renderAppFocusName(hs);
   }
 
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /* Open-Meteo WMO weather codes, grouped. */
+  function weatherWords(code, day) {
+    if (code === 0) return day ? 'Sunny' : 'Clear';
+    if (code <= 2) return 'Partly cloudy';
+    if (code === 3) return 'Cloudy';
+    if (code === 45 || code === 48) return 'Fog';
+    if (code >= 51 && code <= 57) return 'Drizzle';
+    if (code >= 61 && code <= 67) return 'Rain';
+    if (code >= 71 && code <= 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Showers';
+    if (code === 85 || code === 86) return 'Snow showers';
+    if (code >= 95) return 'Thunderstorm';
+    return '';
+  }
   function clockText() {
     var d = new Date(), h = S.c && S.c.clock === '12' ? d.getHours() % 12 || 12 : d.getHours(), m = d.getMinutes();
     return h + ':' + (m < 10 ? '0' : '') + m;
   }
   function clockHtml() {
-    var text = clockText(), metrics = fontMetrics[homeFont()];
-    if (!metrics || !metrics.digitCell) return text;
-    return text.replace(/[0-9]/g, function (digit) { return '<span class="clock-digit">' + digit + '</span>'; });
+    var text = clockText(), metrics = fontMetrics[homeFont()], html;
+    html = !metrics || !metrics.digitCell ? text : text.replace(/[0-9]/g, function (digit) { return '<span class="clock-digit">' + digit + '</span>'; });
+    if (S.c && S.c.clock === '12') html += '<span class="clock-ampm">' + (new Date().getHours() < 12 ? 'AM' : 'PM') + '</span>';
+    return html;
+  }
+  /* "Monday, 26 October" and, when the owner set a place, "31° Sunny · Bahrain". */
+  function dateText() {
+    var d = new Date(), text = DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+    var w = FrameDevice.weather ? FrameDevice.weather() : null, words;
+    if (w) { words = weatherWords(w.code, w.day); text += ' · ' + w.temp + '°' + (words ? ' ' + words : '') + (w.place ? ' · ' + w.place : ''); }
+    return text;
   }
   function renderCaption(t, hs) {
-    var html = '<span class="clock">' + clockHtml() + '</span>';
+    var html = '<span class="clock">' + clockHtml() + '</span><span class="cap-line cap-date">' + esc(dateText()) + '</span>';
     if (S.c.apps !== 'icons' && hs.items[hs.i] && (S.c.layout === 'list' ? photoLabel(hs.items[hs.i].id, false).size < 88 || photoLabel(hs.items[hs.i].id, false).ellipsis : hs.zone === 'apps' && reducedDockLabel(hs.items[hs.i].id))) html += '<span class="cap-line full-name">' + esc(app(hs.items[hs.i].id).name) + '</span>';
     setHTML(caption, html);
   }
@@ -1327,7 +1353,7 @@
     var items = hs.items, n = items.length, empty = hs.mode !== 'arrange' && !n, g = dockGeom(empty ? -1 : n);
     var anchor = clamp(hs.i, 0, Math.max(0, n - 1)), off = empty ? 0 : dockOffset(n, anchor, g);
     var full = hs.arr ? live(hs.arr.slots).length >= CAP : false, ns = hs.arr ? hs.arr.slots.length : n;
-    var tileFocus = hs.zone === 'apps' || hs.zone === 'tiles', tileSel = hs.zone === 'util' || hs.zone === 'act' || hs.zone === 'ctl' || hs.zone === 'preview';
+    var tileFocus = hs.zone === 'apps' || hs.zone === 'tiles';
     var focusItem = items[anchor], s, ax, label, width;
 
     dock.className = 'dock' + (empty ? ' is-empty' : '');
@@ -1343,10 +1369,10 @@
     shelf.className = 'shelf' + (g.broad && off > 0 ? ' fade-l' : '') + (g.broad && off + g.shelf < n * g.pitch - 8 ? ' fade-r' : '');
 
     keyed(track, empty ? [] : items, function (el, it, i) {
-      var a = it.id ? app(it.id) : null, left = i * g.pitch, focus = tileFocus && i === anchor, sel = tileSel && i === anchor;
+      var a = it.id ? app(it.id) : null, left = i * g.pitch, focus = tileFocus && i === anchor;
       var lifted = hs.lifted && i === anchor, partial = g.broad && (left - off < -1 || left + g.tw - off > g.shelf + 1);
       setContent(el, it.kind + '|' + (it.id || '') + '|' + (it.id ? dockLabelSize(it.id) : full) + '|' + S.c.bg + '|' + S.c.apps + '|' + homeFont(), '<span class="tile-content">' + dockTileHtml(it, full) + '</span>');
-      el.className = 'tile k-' + it.kind + (focus ? ' is-focus' : '') + (sel ? ' is-sel' : '') + (lifted ? ' is-lifted' : '') + (partial ? ' is-partial' : '')
+      el.className = 'tile k-' + it.kind + (focus ? ' is-focus' : '') + (lifted ? ' is-lifted' : '') + (partial ? ' is-partial' : '')
         + (a && !a.mark ? ' is-text' : '') + (it.kind === 'add' && full ? ' is-full' : '') + (it.kind === 'app' && S.press === it.id ? ' is-press' : '')
         + (lifted && i === 0 ? ' no-l' : '') + (lifted && i >= ns - 1 ? ' no-r' : '');
       el.style.transform = 'translate3d(' + left + 'px,0,0)';
@@ -1361,7 +1387,7 @@
       dockEdgeUntil = Date.now() + 220;
       if (!dockEdgeFrame) dockEdgeFrame = window.requestAnimationFrame(trackDockEdges);
     }
-    plate.className = 'plate' + (!n || empty || hs.zone === null ? '' : hs.lifted ? ' on-lift' : tileFocus ? ' on-focus' : tileSel ? ' on-sel' : '');
+    plate.className = 'plate' + (!n || empty || hs.zone === null ? '' : hs.lifted ? ' on-lift' : tileFocus ? ' on-focus' : '');
     plate.style.transform = 'translate3d(' + (anchor * g.pitch) + 'px,0,0)';
 
     cueL.style.left = (g.x - 72) + 'px'; cueR.style.left = (g.x + g.w + 24) + 'px';
@@ -1429,7 +1455,7 @@
   function renderList(hs) {
     var items = hs.items, n = items.length, compact = hs.mode === 'arrange', pitch = compact ? PH_COMPACT_PITCH : PH_PITCH;
     var anchor = clamp(hs.i, 0, Math.max(0, n - 1)), first, off, width, slot, y, s, label, aw, plateState;
-    var rowFocus = hs.zone === 'apps' || hs.zone === 'tiles', remembered = hs.zone === 'util' || hs.zone === 'act' || hs.zone === 'ctl' || hs.zone === 'preview';
+    var rowFocus = hs.zone === 'apps' || hs.zone === 'tiles';
     photoModeTransition(compact);
     if (compact) {
       first = clamp(scroll.photoArrange, anchor - 7, anchor - 1);
@@ -1455,7 +1481,7 @@
         markImage.onerror = function () { this.style.visibility = 'hidden'; };
         if (markImage.complete && !markImage.naturalWidth) markImage.style.visibility = 'hidden';
       }
-      row.className = 'ph-row k-' + it.kind + (focus ? ' is-focus' : '') + (remembered && i === anchor ? ' is-sel' : '') + (lifted ? ' is-lifted' : '')
+      row.className = 'ph-row k-' + it.kind + (focus ? ' is-focus' : '') + (lifted ? ' is-lifted' : '')
         + (lifted && i === 0 ? ' no-up' : '') + (lifted && i === n - 1 ? ' no-down' : '')
         + (it.kind === 'app' && S.press === it.id ? ' is-press' : '');
       row.style.width = (compact ? listPlateWidth(it.id, compact) : 1200) + 'px'; row.style.height = pitch + 'px';
@@ -1465,7 +1491,7 @@
     });
     phRows.style.transform = 'translate3d(0,' + (-off) + 'px,0)';
     y = (compact ? PH_COMPACT_TOP + 2 : PH_TOP + 1) + slot * pitch;
-    plateState = !n || hs.zone === null ? '' : hs.lifted ? 'on-lift' : S.c.focus === 'glass' && rowFocus ? 'on-focus' : S.c.focus === 'glass' && remembered ? 'on-sel' : '';
+    plateState = !n || hs.zone === null ? '' : hs.lifted ? 'on-lift' : S.c.focus === 'glass' && rowFocus ? 'on-focus' : '';
     renderPhotoPlate(items[anchor] ? items[anchor].id : '', width, compact ? 88 : 134, y, plateState);
     if (compact && !hs.lifted && (hs.zone === 'tiles' || hs.zone === 'act') && items[anchor]) {
       s = hs.arr.slots[anchor]; label = (s.removed ? 'Restore ' : 'Remove ') + app(s.id).name; aw = actionWidth(label);
@@ -2028,6 +2054,7 @@
   refreshCatalog();
   window.addEventListener('cleanframe:apps-changed', function () { refreshCatalog(); });
   /* New Bing photos: rebuild the lists; move off a photo that left the cache or a built-in fallback. */
+  window.addEventListener('cleanframe:weather-updated', function () { updateClock(); });
   window.addEventListener('cleanframe:photos-updated', function () {
     var current = wall(S.c.wall), target;
     setPhotos(FrameDevice.photos ? FrameDevice.photos() : []); useSource(S.c.source);
