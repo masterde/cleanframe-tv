@@ -1250,15 +1250,15 @@
       + '<span class="wx-sub">' + esc(words + (typeof w.hi === 'number' && typeof w.lo === 'number' ? (words ? ' · ' : '') + degrees(w.lo) + '–' + degrees(w.hi) : '')) + '</span>'
       + (w.place ? '<span class="wx-place">' + esc(w.place) + '</span>' : '');
   }
-  /* "15 Jumada I 1448 AH" (Umm al-Qura calendar; it can differ by a day from local moon sighting), or '' when the WebView lacks it. */
+  var HIJRI_MONTHS = ['Muharram', 'Safar', 'Rabiʻ I', 'Rabiʻ II', 'Jumada I', 'Jumada II', 'Rajab', 'Shaʻban', 'Ramadan', 'Shawwal', 'Dhu al-Qiʻdah', 'Dhu al-Hijjah'];
+  /* "15 Jumada I 1448 AH" (Umm al-Qura calendar; it can differ by a day from local moon sighting), or '' when the WebView lacks it.
+     Only the day, month number and year are taken from Intl: some TV WebViews print Gregorian names ("May") for Islamic months. */
   function hijriText() {
-    var f, parts, by = {};
+    var by = {}, month;
     try {
-      f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric' });
-      if (!f.formatToParts) return f.format(new Date());
-      parts = f.formatToParts(new Date());
-      parts.forEach(function (part) { by[part.type] = part.value; });
-      return by.day && by.month && by.year ? by.day + ' ' + by.month + ' ' + by.year + ' AH' : f.format(new Date());
+      new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date()).forEach(function (part) { by[part.type] = part.value; });
+      month = parseInt(by.month, 10);
+      return by.day && by.year && month >= 1 && month <= 12 ? parseInt(by.day, 10) + ' ' + HIJRI_MONTHS[month - 1] + ' ' + parseInt(by.year, 10) + ' AH' : '';
     } catch (e) { return ''; }
   }
   function duration(minutes) { var h = Math.floor(minutes / 60), m = minutes % 60; return h > 0 ? h + 'h ' + m + 'm' : m + ' min'; }
