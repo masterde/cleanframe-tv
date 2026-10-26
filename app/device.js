@@ -171,6 +171,28 @@
   }
   function weatherPlace() { var b = bridge(); try { return b && b.weatherPlace ? String(b.weatherPlace()) : ''; } catch (e) { return ''; } }
   function editWeatherPlace(done) { var b = bridge(); if (!b || !b.editWeatherPlace) { result(PREVIEW, done); return; } try { b.editWeatherPlace(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  /* Today's prayer times {date, t: {Fajr..Isha as "HH:mm"}, next: tomorrow's Fajr} for the weather location, or null when off or not downloaded yet. */
+  function prayer() {
+    var b = bridge(), value;
+    if (!b || !b.prayerJson) return null;
+    try { value = parse(b.prayerJson(), null); } catch (e) { value = null; }
+    return value && value.t && typeof value.t.Fajr === 'string' && typeof value.next === 'string' ? value : null;
+  }
+  /* Tells Android whether Prayer times is on (only changes are sent); it contacts Aladhan only when on. */
+  var sentPrayer = null;
+  function setPrayerEnabled(on) {
+    var b = bridge();
+    if (!b || !b.setPrayerEnabled || on === sentPrayer) return;
+    try { b.setPrayerEnabled(!!on); sentPrayer = on; } catch (e) {}
+  }
+  /* The TV's free and total RAM in MB, or null in the preview. */
+  function memory() {
+    var b = bridge(), value;
+    if (!b || !b.memoryJson) return null;
+    try { value = parse(b.memoryJson(), null); } catch (e) { value = null; }
+    return value && typeof value.availMb === 'number' && typeof value.totalMb === 'number' ? value : null;
+  }
+  function freeMemory(done) { var b = bridge(); if (!b || !b.freeMemory) { result(PREVIEW, done); return; } try { b.freeMemory(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
@@ -182,7 +204,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();

@@ -160,6 +160,32 @@ assert.equal(dev.weather(), null);
 assert.equal(dev.weatherPlace(), '');
 dev.editWeatherPlace((err) => { result = err; }); assert.match(result.message, /Preview/);
 
+// Prayer times: only complete data counts; Android is told about on/off changes once.
+dev = load(fakeBridge(installed, { prayerJson: () => '{"date":"26-10-2026","t":{"Fajr":"04:12","Dhuhr":"11:25","Asr":"14:48","Maghrib":"17:20","Isha":"18:50"},"next":"04:13"}' }));
+assert.equal(plain(dev.prayer()).t.Asr, '14:48');
+assert.equal(plain(dev.prayer()).next, '04:13');
+dev = load(fakeBridge(installed, { prayerJson: () => '' }));
+assert.equal(dev.prayer(), null);
+dev = load(fakeBridge(installed, { prayerJson: () => '{"t":{}}' }));
+assert.equal(dev.prayer(), null);
+const prayerBridge = fakeBridge(installed, { setPrayerEnabled: (on) => { prayerBridge.calls.push(['prayer', on]); } });
+dev = load(prayerBridge);
+dev.setPrayerEnabled(false); dev.setPrayerEnabled(false); dev.setPrayerEnabled(true); dev.setPrayerEnabled(true);
+assert.deepEqual(plain(prayerBridge.calls), [['prayer', false], ['prayer', true]]);
+dev = load(null);
+assert.equal(dev.prayer(), null);
+dev.setPrayerEnabled(true);
+
+// Memory: numbers only; the preview has none and explains why.
+dev = load(fakeBridge(installed, { memoryJson: () => '{"availMb":470,"totalMb":2048}', freeMemory: () => {} }));
+assert.deepEqual(plain(dev.memory()), { availMb: 470, totalMb: 2048 });
+dev.freeMemory((err) => { result = err; }); assert.equal(result, null);
+dev = load(fakeBridge(installed, { memoryJson: () => '{"availMb":"lots"}' }));
+assert.equal(dev.memory(), null);
+dev = load(null);
+assert.equal(dev.memory(), null);
+dev.freeMemory((err) => { result = err; }); assert.match(result.message, /Preview/);
+
 console.log('device.js adapter checks passed.');
 
 // No known brand installed: Home starts with the first installed apps (not inputs), unmarked.

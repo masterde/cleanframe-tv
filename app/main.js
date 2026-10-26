@@ -58,10 +58,10 @@
     newsreader: { name: 'Newsreader', family: 'Study Newsreader', display: 400, ui: 400, clock: 400 }
   };
   var PRIVATE_FONTS = window.CleanFramePrivateFontIDs || [], fontMetrics = {}, unavailableFonts = {}, widthCache = {}, fontsReady = false;
-  var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source'];
-  var LOOK_VALUES = { clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
+  var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source', 'units', 'hijri', 'prayer', 'night'];
+  var LOOK_VALUES = { units: ['c', 'f'], hijri: ['off', 'on'], prayer: ['off', 'on'], night: ['off', 'auto'], clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
   var LOOK_NAMES = { bg: 'Background', layout: 'Layout', apps: 'Apps', font: 'Font', controls: 'Home controls', focus: 'Focus', material: 'Material' };
-  var VALUE_NAMES = { '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', icons: 'Icons', both: 'Icons and text', text: 'Text' };
+  var VALUE_NAMES = { c: '°C', f: '°F', off: 'Off', on: 'On', auto: 'Auto', '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', icons: 'Icons', both: 'Icons and text', text: 'Text' };
   var UTIL = { photo: ['Photo mode', 'photo'], apps: ['All apps', 'apps'], arrange: ['Arrange', 'arrange'], settings: ['Settings', 'settings'] };
   var MSG = {};
   var SVG = {
@@ -98,7 +98,7 @@
     for (var i = 0; i < list.length; i++) if (list[i].toLowerCase() === v) return list[i];
     return fallback;
   }
-  function lookOf(c) { return { bg: c.bg, wall: c.wall, layout: c.layout, apps: c.apps, font: c.font, controls: c.controls, focus: c.focus, material: c.material, clock: c.clock, source: c.source }; }
+  function lookOf(c) { return { bg: c.bg, wall: c.wall, layout: c.layout, apps: c.apps, font: c.font, controls: c.controls, focus: c.focus, material: c.material, clock: c.clock, source: c.source, units: c.units, hijri: c.hijri, prayer: c.prayer, night: c.night }; }
   function materialApplies(c) { c = c || S.c; return c.bg === 'photo' && (c.layout === 'dock' || c.focus === 'glass'); }
   function derivedTheme() { return S.c.layout === 'list' ? 'list' : 'shore'; }
 
@@ -357,7 +357,8 @@
       apps: pick(modern.apps, LOOK_VALUES.apps, legacyList ? 'text' : 'both'), controls: pick(modern.controls, LOOK_VALUES.controls, 'both'),
       focus: pick(modern.focus, LOOK_VALUES.focus, legacyList ? 'type' : 'glass'), material: pick(modern.material, LOOK_VALUES.material, 'soft'),
       font: pick(modern.font, LOOK_VALUES.font, 'manrope'), clock: pick(modern.clock, LOOK_VALUES.clock, FrameDevice.is24Hour && !FrameDevice.is24Hour() ? '12' : '24'),
-      source: pick(modern.source, LOOK_VALUES.source, 'builtin'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
+      source: pick(modern.source, LOOK_VALUES.source, 'builtin'), units: pick(modern.units, LOOK_VALUES.units, 'c'), hijri: pick(modern.hijri, LOOK_VALUES.hijri, 'off'),
+      prayer: pick(modern.prayer, LOOK_VALUES.prayer, 'off'), night: pick(modern.night, LOOK_VALUES.night, 'off'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
       home: h, recent: recent, lastApp: h.indexOf(s.lastApp) >= 0 ? s.lastApp : h[0],
       mode: pick(s.mode, MODES.map(function (m) { return m.id; }), 'fixed')
     };
@@ -549,7 +550,7 @@
   function addAppsRoute() { openEditor('home'); }
   function openSettings() { push({ id: 'settings', f: { id: S.settingsFocus } }); }
   function openAppearance(group) {
-    var axis = { background: 'bg', layout: 'layout', typography: 'font', focus: 'focus' }[group];
+    var axis = { background: 'bg', layout: 'layout', info: 'units', typography: 'font', focus: 'focus' }[group];
     var action = S.detailFocus[group] || (axis ? 'choice.' + axis + '.' + S.c[axis] : group === 'rotation' ? 'rotation.' + S.c.mode : 'android.settings');
     push({ id: 'appearance', group: group, f: { action: action } });
   }
@@ -866,6 +867,7 @@
     var n = S.c.home.length;
     return [{ id: 'background', label: 'Background', value: S.c.bg === 'photo' ? wall(S.c.wall).name : VALUE_NAMES[S.c.bg] },
       { id: 'layout', label: 'Layout', value: VALUE_NAMES[S.c.layout] },
+      { id: 'info', label: 'Date & weather', value: FrameDevice.weatherPlace && FrameDevice.weatherPlace() || 'Weather off' },
       { id: 'typography', label: 'Typography', value: FONTS[S.c.font].name },
       { id: 'focus', label: 'Focus', value: VALUE_NAMES[S.c.focus] + (materialApplies() ? ', ' + VALUE_NAMES[S.c.material] : '') },
       { id: 'editor', label: 'Apps on Home', value: n + (n === 1 ? ' app' : ' apps') },
@@ -889,7 +891,7 @@
     if (id === 'editor') openEditor('settings');
     else openAppearance(id);
   }
-  var DETAIL_NAMES = { background: 'Background', layout: 'Layout', typography: 'Typography', focus: 'Focus', rotation: 'Rotation', android: 'Android TV', buttons: 'Remote buttons' };
+  var DETAIL_NAMES = { background: 'Background', layout: 'Layout', info: 'Date & weather', typography: 'Typography', focus: 'Focus', rotation: 'Rotation', android: 'Android TV', buttons: 'Remote buttons' };
   function choice(axis, value, disabled) {
     return { action: axis === 'mode' ? 'rotation.' + value : 'choice.' + axis + '.' + value, axis: axis, value: value, disabled: !!disabled,
       label: axis === 'font' ? FONTS[value].name : axis === 'mode' ? MODES.filter(function (m) { return m.id === value; })[0].name : value === 'both' ? 'Both' : VALUE_NAMES[value] };
@@ -905,14 +907,22 @@
         { action: 'background.keywords', label: 'Pexels keywords', description: FrameDevice.pexelsKeywords ? FrameDevice.pexelsKeywords() : '' },
         { action: 'background.upload', label: 'Upload photos', description: 'From a computer or phone on the same Wi-Fi' }] },
       { id: 'wall', title: 'Wallpaper', items: [{ action: 'background.wallpaper', label: wall(S.c.wall).name, thumbnail: true, disabled: flat }] },
-      { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }], reason: flat ? 'Choose Photo to use wallpaper and rotation.' : '' }
+      { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }], reason: flat ? 'Choose Photo to use wallpaper and rotation.' : '' },
+      { id: 'night', title: 'Night mode', horizontal: true, items: options('night', ['off', 'auto'], flat),
+        reason: flat ? 'Choose Photo to use night mode.' : 'Auto dims the wallpaper from sunset to sunrise (22:00 to 06:00 without weather).' }
     ];
     if (t.group === 'layout') return [
       { id: 'layout', title: 'Layout', horizontal: true, items: options('layout', ['list', 'dock']) },
       { id: 'apps', title: 'App display', horizontal: true, items: options('apps', ['text', 'icons', 'both']) },
       { id: 'controls', title: 'Home controls', horizontal: true, items: options('controls', ['text', 'icons', 'both']) },
-      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) },
-      { id: 'weather', title: 'Weather', items: [{ action: 'layout.weather', label: 'Location', description: FrameDevice.weatherPlace && FrameDevice.weatherPlace() || 'Off. Enter a city to show the weather under the clock' }] }
+      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) }
+    ];
+    if (t.group === 'info') return [
+      { id: 'weather', title: 'Weather', items: [{ action: 'layout.weather', label: 'Location', description: FrameDevice.weatherPlace && FrameDevice.weatherPlace() || 'Off. Enter a city to show the weather under the clock' }] },
+      { id: 'units', title: 'Temperature', horizontal: true, items: options('units', ['c', 'f']) },
+      { id: 'hijri', title: 'Hijri date', horizontal: true, items: options('hijri', ['off', 'on']) },
+      { id: 'prayer', title: 'Prayer times', horizontal: true, items: options('prayer', ['off', 'on']),
+        reason: FrameDevice.weatherPlace && FrameDevice.weatherPlace() ? 'Uses the weather location.' : 'Set a weather location first.' }
     ];
     if (t.group === 'typography') return [{ id: 'font', title: '', items: options('font', LOOK_VALUES.font) }];
     if (t.group === 'focus') return [
@@ -925,11 +935,16 @@
     if (t.group === 'buttons') return buttonSections();
     return [{ id: 'android', title: '', items: [
       { action: 'android.settings', label: 'TV settings', description: 'Picture, sound, network and inputs' },
+      { action: 'android.memory', label: 'Free up memory', description: memoryDescription() },
       { action: 'android.buttons', label: 'Remote buttons', description: buttonsSummary() },
       { action: 'android.previous', label: 'Previous launcher', description: 'Open the home screen you used before CleanFrame TV' }
     ] }];
   }
   /* Remote buttons: Android's accessibility service catches assigned keys (such as Mi or Netflix) and opens the app. */
+  function memoryDescription() {
+    var m = FrameDevice.memory ? FrameDevice.memory() : null;
+    return m ? m.availMb + ' MB free of ' + m.totalMb + ' MB. Ends background apps.' : 'Ends apps running in the background';
+  }
   function remoteButtons() { return FrameDevice.buttons ? FrameDevice.buttons() : { enabled: false, buttons: [] }; }
   function buttonsSummary() {
     var n = remoteButtons().buttons.length;
@@ -996,6 +1011,7 @@
     else if (item.action === 'layout.weather') perform('Weather location', FrameDevice.editWeatherPlace);
     else if (item.action === 'background.upload') perform('Upload photos', FrameDevice.openUpload);
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
+    else if (item.action === 'android.memory') perform('Free up memory', FrameDevice.freeMemory);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
     else if (item.action === 'android.buttons') openAppearance('buttons');
     else if (item.action === 'buttons.service') perform('Accessibility settings', FrameDevice.accessibilitySettings);
@@ -1037,7 +1053,7 @@
   V.appearance = {
     norm: function (t) {
       var rows = detailRows(t), exists = false, applied = null;
-      var axis = { background: 'bg', layout: 'layout', typography: 'font', focus: 'focus', rotation: 'mode' }[t.group];
+      var axis = { background: 'bg', layout: 'layout', info: 'units', typography: 'font', focus: 'focus', rotation: 'mode' }[t.group];
       rows.forEach(function (items) { items.forEach(function (item) {
         if (item.action === t.f.action) exists = true;
         if (item.axis === axis && item.value === S.c[axis]) applied = item;
@@ -1141,7 +1157,7 @@
     if (FrameDevice.photoSource) FrameDevice.photoSource(S.c.source);
     var t = top(), sheet = !!V[t.id].sheet, shown = wall(S.shown ? S.shown.wall : S.c.wall), palette = ADAPTIVE_INK[shown.id];
     var adaptive = applyAdaptiveInk(palette), tr = adaptive && palette.tr ? palette.tr.pol : shown.ut.tr, br = adaptive && palette.br ? palette.br.pol : shown.ut.br;
-    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '') + (S.photoMode ? ' is-photo-mode' : '');
+    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '') + (S.photoMode ? ' is-photo-mode' : '') + (nightNow() ? ' is-night' : '');
     setHTML(photoCaptionEl, S.photoMode && shown.caption ? esc(shown.caption) : '');
     if (!adaptive && shown.clockInk) stage.style.setProperty('--clock-ink', shown.clockInk);
     else stage.style.removeProperty('--clock-ink');
@@ -1181,6 +1197,7 @@
 
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   /* Open-Meteo WMO weather codes, grouped. */
   function weatherWords(code, day) {
     if (code === 0) return day ? 'Sunny' : 'Clear';
@@ -1195,6 +1212,23 @@
     if (code >= 95) return 'Thunderstorm';
     return '';
   }
+  var CLOUD = '<path d="M7 19h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 10.2 4.4 4.4 0 0 0 7 19z"/>';
+  var WEATHER_ICONS = {
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    partly: '<circle cx="8" cy="8" r="2.8"/><path d="M8 2.2v1.4M2.2 8h1.4M3.9 3.9l1 1M12.1 3.9l-1 1"/><path d="M8.5 20h9a3.7 3.7 0 0 0 .5-7.4A5 5 0 0 0 8.4 12a4 4 0 0 0 .1 8z"/>',
+    cloud: CLOUD,
+    fog: '<path d="M4 8h16M3 12h18M5 16h14M8 20h8"/>',
+    rain: CLOUD + '<path d="M8 21l1-2.2M12 21l1-2.2M16 21l1-2.2"/>',
+    snow: CLOUD + '<path d="M8.5 21h.01M12 21h.01M15.5 21h.01"/>',
+    storm: CLOUD + '<path d="M12.5 13.5l-2 3.2h3l-1.5 3.3"/>'
+  };
+  function weatherIcon(code, day) {
+    var key = code === 0 ? (day ? 'sun' : 'moon') : code <= 2 ? 'partly' : code === 3 ? 'cloud' : code === 45 || code === 48 ? 'fog' : code >= 95 ? 'storm'
+      : code >= 71 && code <= 77 || code === 85 || code === 86 ? 'snow' : code >= 51 ? 'rain' : 'cloud';
+    return '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + WEATHER_ICONS[key] + '</svg>';
+  }
+  function degrees(c) { return Math.round(S.c && S.c.units === 'f' ? c * 9 / 5 + 32 : c) + '°'; }
   function clockText() {
     var d = new Date(), h = S.c && S.c.clock === '12' ? d.getHours() % 12 || 12 : d.getHours(), m = d.getMinutes();
     return h + ':' + (m < 10 ? '0' : '') + m;
@@ -1205,15 +1239,61 @@
     if (S.c && S.c.clock === '12') html += '<span class="clock-ampm">' + (new Date().getHours() < 12 ? 'AM' : 'PM') + '</span>';
     return html;
   }
-  /* "Monday, 26 October" and, when the owner set a place, "31° Sunny · Bahrain". */
-  function dateText() {
-    var d = new Date(), text = DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
-    var w = FrameDevice.weather ? FrameDevice.weather() : null, words;
-    if (w) { words = weatherWords(w.code, w.day); text += ' · ' + w.temp + '°' + (words ? ' ' + words : '') + (w.place ? ' · ' + w.place : ''); }
-    return text;
+  /* "Monday, 26 October" */
+  function dateText() { var d = new Date(); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  /* "[icon] 26° Sunny · 24°–34° · Bahrain" when the owner set a place. */
+  function weatherHtml() {
+    var w = FrameDevice.weather ? FrameDevice.weather() : null, words, text;
+    if (!w) return '';
+    words = weatherWords(w.code, w.day);
+    text = degrees(w.temp) + (words ? ' ' + words : '') + (typeof w.hi === 'number' && typeof w.lo === 'number' ? ' · ' + degrees(w.lo) + '–' + degrees(w.hi) : '') + (w.place ? ' · ' + w.place : '');
+    return weatherIcon(w.code, w.day) + '<span>' + esc(text) + '</span>';
   }
+  /* "15 Jumada I 1448 AH" (Umm al-Qura calendar; it can differ by a day from local moon sighting), or '' when the WebView lacks it. */
+  function hijriText() {
+    var f, parts, by = {};
+    try {
+      f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric' });
+      if (!f.formatToParts) return f.format(new Date());
+      parts = f.formatToParts(new Date());
+      parts.forEach(function (part) { by[part.type] = part.value; });
+      return by.day && by.month && by.year ? by.day + ' ' + by.month + ' ' + by.year + ' AH' : f.format(new Date());
+    } catch (e) { return ''; }
+  }
+  function duration(minutes) { var h = Math.floor(minutes / 60), m = minutes % 60; return h > 0 ? h + 'h ' + m + 'm' : m + ' min'; }
+  /* "Asr in 1h 12m": the next of the five prayers from today's times; after Isha, tomorrow's Fajr. */
+  function prayerText() {
+    var p = FrameDevice.prayer ? FrameDevice.prayer() : null, d = new Date(), now = d.getHours() * 60 + d.getMinutes(), i, parts, at;
+    if (!p) return '';
+    for (i = 0; i < PRAYERS.length; i++) {
+      parts = String(p.t[PRAYERS[i]] || '').split(':'); at = +parts[0] * 60 + +parts[1];
+      if (isNaN(at)) continue;
+      if (at > now) return PRAYERS[i] + ' in ' + duration(at - now);
+    }
+    parts = String(p.next).split(':'); at = +parts[0] * 60 + +parts[1];
+    return isNaN(at) ? '' : 'Fajr in ' + duration(1440 - now + at);
+  }
+  function extraText() {
+    var parts = [], hijri = S.c.hijri === 'on' ? hijriText() : '', prayer = S.c.prayer === 'on' ? prayerText() : '';
+    if (hijri) parts.push(hijri);
+    if (prayer) parts.push(prayer);
+    return parts.join(' · ');
+  }
+  /* Night mode (Auto): from sunset to sunrise by the weather, else 22:00 to 06:00. */
+  function nightNow() {
+    var w, h;
+    if (!S.c || S.c.night !== 'auto') return false;
+    w = FrameDevice.weather ? FrameDevice.weather() : null;
+    if (w) return !w.day;
+    h = new Date().getHours();
+    return h >= 22 || h < 6;
+  }
+  function syncPrayer() { if (FrameDevice.setPrayerEnabled) FrameDevice.setPrayerEnabled(S.c.prayer === 'on'); }
   function renderCaption(t, hs) {
-    var html = '<span class="clock">' + clockHtml() + '</span><span class="cap-line cap-date">' + esc(dateText()) + '</span>';
+    var weather = weatherHtml(), extra = extraText();
+    var html = '<span class="clock">' + clockHtml() + '</span><span class="cap-line cap-date">' + esc(dateText()) + '</span>'
+      + (weather ? '<span class="cap-line cap-date cap-weather">' + weather + '</span>' : '') + (extra ? '<span class="cap-line cap-date">' + esc(extra) + '</span>' : '');
+    syncPrayer();
     if (S.c.apps !== 'icons' && hs.items[hs.i] && (S.c.layout === 'list' ? photoLabel(hs.items[hs.i].id, false).size < 88 || photoLabel(hs.items[hs.i].id, false).ellipsis : hs.zone === 'apps' && reducedDockLabel(hs.items[hs.i].id))) html += '<span class="cap-line full-name">' + esc(app(hs.items[hs.i].id).name) + '</span>';
     setHTML(caption, html);
   }
@@ -1567,7 +1647,7 @@
     setHTML(appearanceStatus, status);
     hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + detailParent(t) : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'android.buttons' ? 'Assign remote buttons'
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
-      : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
+      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
   }
   /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
@@ -1904,7 +1984,7 @@
   }
 
   /* ---------- Lifecycle and remote input ---------- */
-  var clockTimer = 0, rotationTimer = 0, activeSince = 0, activeMs = 0, rotationKey = '';
+  var nightShown = false, clockTimer = 0, rotationTimer = 0, activeSince = 0, activeMs = 0, rotationKey = '';
   function rotationActive() { return !document.hidden && top().id === 'home' && S.c.bg === 'photo' && !S.pending && mode().min > 0; }
   function pauseRotation() {
     if (activeSince) { activeMs += Date.now() - activeSince; activeSince = 0; }
@@ -1925,7 +2005,8 @@
   function updateClock() {
     clearTimeout(clockTimer);
     if (document.hidden) return;
-    if (top().id === 'home' || isSettingsDetail(top())) renderCaption(top(), homeState(top()));
+    if (nightNow() !== nightShown) { nightShown = nightNow(); render(); }
+    else if (top().id === 'home' || isSettingsDetail(top())) renderCaption(top(), homeState(top()));
     clockTimer = setTimeout(updateClock, 60000 - (Date.now() % 60000) + 30);
   }
   function focusStage() { try { stage.focus({ preventScroll: true }); } catch (e) { stage.focus(); } }

@@ -31,6 +31,9 @@ class WeatherFeed(context: Context, private val onUpdated: () -> Unit) {
         return prefs.getString(READING, "") ?: ""
     }
 
+    /** `{"lat":…,"lon":…,"name":…}` for the place once it has been found, else null. */
+    fun coordinates(): JSONObject? = prefs.getString(COORDS, null)?.let { JSONObject(it) }
+
     /** An empty [text] turns weather off. */
     fun setPlace(text: String) {
         val clean = text.trim().replace(Regex("\\s+"), " ").take(80)
@@ -109,18 +112,22 @@ class WeatherFeed(context: Context, private val onUpdated: () -> Unit) {
             "https://geocoding-api.open-meteo.com/v1/search?name=${URLEncoder.encode(place, "UTF-8")}&count=1&language=en&format=json"
 
         fun forecastUrl(lat: Double, lon: Double) =
-            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&timezone=auto"
+            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto"
 
-        /** `{place, temp, code, day}` from an Open-Meteo forecast response, or null when it has no current reading. */
+        /** `{place, temp, code, day, hi, lo}` (hi and lo only when the response has them) from an Open-Meteo forecast response, or null when it has no current reading. */
         fun readingJson(wanted: String, name: String, body: JSONObject): String? {
             val current = body.optJSONObject("current") ?: return null
             if (!current.has("temperature_2m") || !current.has("weather_code")) return null
-            return JSONObject()
+            val reading = JSONObject()
                 .put("place", name.ifEmpty { wanted })
                 .put("temp", Math.round(current.getDouble("temperature_2m")).toInt())
                 .put("code", current.getInt("weather_code"))
                 .put("day", current.optInt("is_day", 1) == 1)
-                .toString()
+            val daily = body.optJSONObject("daily")
+            val hi = daily?.optJSONArray("temperature_2m_max")?.optDouble(0, Double.NaN) ?: Double.NaN
+            val lo = daily?.optJSONArray("temperature_2m_min")?.optDouble(0, Double.NaN) ?: Double.NaN
+            if (!hi.isNaN() && !lo.isNaN()) reading.put("hi", Math.round(hi).toInt()).put("lo", Math.round(lo).toInt())
+            return reading.toString()
         }
     }
 }

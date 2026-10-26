@@ -88,6 +88,32 @@ class AndroidCatalog(private val context: Context) {
      * Ends an app's background processes, freeing its memory. Settings' "Force stop" is reserved for
      * system apps; this is the strongest close a launcher may do, and the app is backgrounded by then.
      */
+    /** `{"availMb":…,"totalMb":…}`: the TV's free and total RAM. */
+    fun memoryJson(): String {
+        val info = ActivityManager.MemoryInfo()
+        (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(info)
+        return """{"availMb":${info.availMem shr 20},"totalMb":${info.totalMem shr 20}}"""
+    }
+
+    /**
+     * Ends every other app's cached background processes (never this launcher), waits a moment for Android to
+     * reclaim them, then reports how many MB were freed and how many are now available.
+     */
+    fun freeMemory(done: (freedMb: Long, availMb: Long) -> Unit) {
+        Thread {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            fun available() = ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }.availMem shr 20
+            val before = available()
+            try {
+                pm.getInstalledApplications(0).forEach { if (it.packageName != context.packageName) am.killBackgroundProcesses(it.packageName) }
+                Thread.sleep(1500)
+            } catch (e: Exception) { Log.w(TAG, "Free memory failed", e) }
+            val after = available()
+            Log.i(TAG, "Freed ${after - before} MB ($after MB available)")
+            done(maxOf(0L, after - before), after)
+        }.start()
+    }
+
     fun close(appId: String): String {
         if (appId.startsWith("input.")) return "Inputs can’t be closed."
         if (appId == context.packageName) return ""

@@ -34,6 +34,7 @@ class HomeActivity : Activity() {
     private lateinit var pexels: PexelsFeed
     private lateinit var upload: UploadServer
     private lateinit var weather: WeatherFeed
+    private lateinit var prayer: PrayerFeed
     private lateinit var bridge: Bridge
     private var web: WebView? = null
     private var pageReady = false
@@ -60,7 +61,8 @@ class HomeActivity : Activity() {
         pexels = PexelsFeed(this, photos) { event("cleanframe:photos-updated") }
         upload = UploadServer(this, photos, pexels) { event("cleanframe:photos-updated") }
         weather = WeatherFeed(this) { event("cleanframe:weather-updated") }
-        bridge = Bridge(this, catalog, photos, feed, pexels, weather)
+        prayer = PrayerFeed(this, weather) { event("cleanframe:weather-updated") }
+        bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer)
         takeDebug(intent)
         takeConfig(intent)
         createWebView()
@@ -177,6 +179,7 @@ class HomeActivity : Activity() {
         feed.close()
         pexels.close()
         weather.close()
+        prayer.close()
         upload.stop()
         web?.destroy()
         super.onDestroy()
@@ -197,6 +200,11 @@ class HomeActivity : Activity() {
             .setNegativeButton("Cancel", null)
             .show()
         field.requestFocus()
+    }
+
+    /** Shown after Settings → Android TV → Free up memory finishes. */
+    fun memoryFreed(freedMb: Long, availMb: Long) = runOnUiThread {
+        android.widget.Toast.makeText(this, if (freedMb > 0) "Freed $freedMb MB. $availMb MB available." else "Nothing more to free. $availMb MB available.", android.widget.Toast.LENGTH_LONG).show()
     }
 
     /** Weather location, typed with the TV keyboard. Empty turns weather off. */

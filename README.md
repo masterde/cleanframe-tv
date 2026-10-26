@@ -116,13 +116,13 @@ adb install CleanFrameTV-<version>.apk
 
 **6. Play Store updates.** Automatic app updates were turned off. To turn them on again: Play Store → profile icon → **Settings → Auto-update apps → Auto-update apps at any time**. The Play Store's background updater is one of the larger memory users, which is why it was turned off.
 
-**7. Weather.** Weather is off until you set a place. To turn it off again, open **Settings → Layout → Weather → Location**, clear the text and save. Nothing else on the TV changed for it.
+**7. Weather, prayer times and the date line.** These are off until you set them. To turn them off again, open **Settings → Date & weather**: clear the Location and save, and set Hijri date and Prayer times to Off. Night mode is in **Settings → Background** (set it to Off). None of them change anything else on the TV.
 
 Clearing background apps with `adb shell am kill-all` changes no setting, so there is nothing to undo.
 
 ## Configure
 
-Everything can be changed with the remote in **Settings**: background and photo source, layout, clock, typography, focus style, Apps on Home, and the Android TV group (TV settings, remote buttons, previous launcher).
+Everything can be changed with the remote in **Settings**: background and photo source, night mode, layout, clock, date and weather (location, °C or °F, Hijri date, prayer times), typography, focus style, Apps on Home, and the Android TV group (TV settings, free up memory, remote buttons, previous launcher).
 
 ### Remote buttons
 
@@ -152,7 +152,14 @@ The [install guide](docs/install.md#configure-from-a-computer) lists every key a
 
 ## Network and privacy
 
-CleanFrame TV uses the network for one thing: when **Background → Photo source** is set to **Bing** (photo of the day), it downloads the latest photos from `www.bing.com` (at most every 12 hours, at 1920×1080, keeping the last eight on the TV). With the built-in wallpapers, which are the default, it makes no network requests. There are no accounts, analytics or ads. Bing photos are fetched for wallpaper use on your TV and are not redistributed with the app.
+CleanFrame TV makes no network requests unless you turn on one of these options. With the built-in wallpapers and no location set, which is the default, it stays offline. There are no accounts, analytics or ads.
+
+- **Bing photos** (Background → Photo source): downloads the latest photos from `www.bing.com` at most every 12 hours, at 1920×1080, keeping the last eight. Bing photos are fetched for wallpaper use on your TV and are not redistributed with the app.
+- **Pexels photos** (Background → Photo source): asks a search function for photos matching your keywords and downloads them from `images.pexels.com`. Only your keywords are sent.
+- **Uploads**: the upload page opens only while its dialog is showing, for at most 10 minutes, behind a 6-digit code, and only answers computers and phones on your own network.
+- **Weather** (Date & weather → Location): sends the place name you typed to Open-Meteo to find its coordinates, then asks it for the current weather at most every 30 minutes. No API key or account is used, and the TV's own location is never used.
+- **Prayer times** (Date & weather → Prayer times): asks Aladhan (`api.aladhan.com`) for today's and tomorrow's times once a day, sending only the place's coordinates. It needs a weather location and uses the Gulf Region calculation method.
+- **Hijri date** and **Night mode** use the TV's clock and calculate everything on the TV (Night mode uses the weather's sunset and sunrise when weather is on).
 
 The optional remote-button service is an Android accessibility service. Android lets such a service see key presses so it can catch the buttons you assign. It acts only on those, passes every other key through, stores nothing and cannot read the screen. It stays off unless you enable it.
 
