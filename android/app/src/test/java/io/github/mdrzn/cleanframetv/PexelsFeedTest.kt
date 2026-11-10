@@ -35,4 +35,16 @@ class PexelsFeedTest {
         assertEquals("A serene view of the Hungarian…", PexelsFeed.shorten("A serene view of the Hungarian countryside with lush greenery"))
         assertEquals("Quiet lake", PexelsFeed.shorten("Quiet lake"))
     }
+
+    @Test fun keepsAtLeastTwelveAndTwoPerKeyword() {
+        assertEquals(12, PexelsFeed.keepFor(1))
+        assertEquals(12, PexelsFeed.keepFor(6))
+        assertEquals(20, PexelsFeed.keepFor(10))
+    }
+
+    @Test fun entryRecordsTheKeywordOnlyWhenGiven() {
+        val meta = PhotoMeta("dark", "light", "light", 0.12, false)
+        assert(meta.entryJson("pexels-1", "Lake", "c", "pexels", "city at night").contains("\"keyword\":\"city at night\""))
+        assert(!meta.entryJson("pexels-1", "Lake", "c", "pexels").contains("keyword"))
+    }
 }

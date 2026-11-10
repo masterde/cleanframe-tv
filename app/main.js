@@ -35,6 +35,7 @@
   function useSource(source) {
     var list = sourceWalls(source);
     if (WALLS_SOURCE === source && WALLS.length) return;
+    if (source === 'pexels' && list.length && window.FrameDevice && FrameDevice.orderByKeyword) list = FrameDevice.orderByKeyword(list, FrameDevice.pexelsKeywords());
     WALLS = list.length ? list : sourceWalls('builtin'); WALLS_SOURCE = source;
   }
   /* The wall to show when switching source: keep the current one if it belongs, else the newest of that source. */

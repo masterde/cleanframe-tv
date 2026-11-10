@@ -161,6 +161,14 @@
   /* Downloads now for 'bing' or 'pexels' (Pexels goes through the owner's search function). */
   function refreshSource(source) { var b = bridge(); if (b) try { if (b.refreshSource) b.refreshSource(String(source)); else b.refreshPhotos(); } catch (e) {} }
   function pexelsKeywords() { var b = bridge(); try { return b && b.pexelsKeywords ? String(b.pexelsKeywords()) : 'landscape, nature'; } catch (e) { return ''; } }
+  /* Interleaves Pexels photos by keyword (newest first within each) so each rotation step shows the next keyword. Photos without a known keyword go last. */
+  function orderByKeyword(walls, keywords) {
+    var names = String(keywords || '').split(/[,\n]/).map(function (k) { return k.replace(/\s+/g, ' ').trim().toLowerCase(); }).filter(Boolean);
+    var groups = names.map(function () { return []; }), rest = [], out = [], more = true, round = 0, g;
+    (walls || []).forEach(function (w) { var i = names.indexOf(String(w && w.keyword || '').toLowerCase()); (i >= 0 ? groups[i] : rest).push(w); });
+    while (more) { more = false; for (g = 0; g < groups.length; g++) if (round < groups[g].length) { out.push(groups[g][round]); more = true; } round++; }
+    return out.concat(rest);
+  }
   function editKeywords(done) { var b = bridge(); if (!b || !b.editKeywords) { result(PREVIEW, done); return; } try { b.editKeywords(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   /* Current weather {place, temp, code, day} for the owner's place, or null when weather is off or not downloaded yet. */
   function weather() {
@@ -204,7 +212,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();
