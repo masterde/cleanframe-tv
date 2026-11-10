@@ -947,6 +947,7 @@
     var m = FrameDevice.memory ? FrameDevice.memory() : null;
     return m ? m.availMb + ' MB free of ' + m.totalMb + ' MB. Ends background apps.' : 'Ends apps running in the background';
   }
+  function updatesHint() { var u = FrameDevice.updates ? FrameDevice.updates() : null; return u && u.state === 'pending' ? 'Switch to the new interface now' : 'Check for updates now'; }
   function updatesDescription() {
     var u = FrameDevice.updates ? FrameDevice.updates() : null;
     return u && u.text ? u.text : 'Check for new versions of CleanFrame TV';
@@ -1654,7 +1655,7 @@
     setHTML(appearanceStatus, status);
     hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + detailParent(t) : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'android.buttons' ? 'Assign remote buttons'
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
-      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? 'Check for updates now' : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
+      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? updatesHint() : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
   }
   /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
@@ -2156,4 +2157,14 @@
   window.CleanFrameHome = function () { leavePhotoMode(); if (top().id !== 'home') goScene('home'); norm(); render(); syncRotation(); };
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
+  /* Tell the TV this interface rendered (fonts, background and wallpaper painted) so a downloaded bundle is kept; a page that errors or never gets there is rolled back by the shell. */
+  (function () {
+    var failed = false, waited = 0, timer;
+    window.addEventListener('error', function () { failed = true; });
+    timer = setInterval(function () {
+      waited += 250;
+      if (failed || waited > 15000) { clearInterval(timer); return; }
+      if (QA.ready()) { clearInterval(timer); if (FrameDevice.appReady) FrameDevice.appReady(); }
+    }, 250);
+  })();
 })();

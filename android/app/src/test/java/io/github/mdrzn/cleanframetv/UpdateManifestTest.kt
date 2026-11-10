@@ -94,8 +94,8 @@ class UpdateManifestTest {
     }
 
     private val host = "raw.githubusercontent.com"
-    private fun evaluate(key: String = key1, installedApk: Int = 2, installedBundle: Int = 0, seen: Long = 0, manifestBytes: ByteArray = bytes, h: String = host) =
-        UpdateChecker.evaluate(manifestBytes, signature, key, h, installedApk, "0.2.0", installedBundle, seen)
+    private fun evaluate(key: String = key1, installedApk: Int = 2, installedBundle: Int = 0, seen: Long = 0, manifestBytes: ByteArray = bytes, h: String = host, bad: Set<Int> = emptySet()) =
+        UpdateChecker.evaluate(manifestBytes, signature, key, h, installedApk, "0.2.0", installedBundle, seen, bad)
 
     @Test fun checkReportsWhatIsNewer() {
         val o = evaluate()
@@ -116,5 +116,24 @@ class UpdateManifestTest {
     @Test fun checkRefusesAnOlderManifestButAcceptsTheSameOne() {
         assertEquals("error", evaluate(seen = 13).state)
         assertEquals("available", evaluate(seen = 12).state)
+    }
+
+    @Test fun anAvailableOutcomeCarriesTheBundleToDownload() {
+        val o = evaluate()
+        assertEquals(12, o.bundle!!.version)
+        assertNull(evaluate(installedApk = 3, installedBundle = 12).bundle)
+    }
+
+    @Test fun aBundleAlreadyOnTheTvOrMarkedBadIsNotOfferedAgain() {
+        assertNull("already staged or active", evaluate(installedApk = 3, installedBundle = 12).bundle)
+        assertNull("marked bad", evaluate(installedApk = 3, bad = setOf(12)).bundle)
+    }
+
+    @Test fun matchesSha256CaseInsensitively() {
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest("abc".toByteArray())
+        val hex = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        assertTrue(UpdateChecker.sha256Matches(digest, hex))
+        assertTrue(UpdateChecker.sha256Matches(digest, hex.uppercase()))
+        assertFalse(UpdateChecker.sha256Matches(digest, "0".repeat(64)))
     }
 }
