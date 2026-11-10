@@ -92,4 +92,29 @@ class UpdateManifestTest {
         assertNull(decide(bad = setOf(12)).bundle)
         assertNull(decide(installedApk = 3).apk)
     }
+
+    private val host = "raw.githubusercontent.com"
+    private fun evaluate(key: String = key1, installedApk: Int = 2, installedBundle: Int = 0, seen: Long = 0, manifestBytes: ByteArray = bytes, h: String = host) =
+        UpdateChecker.evaluate(manifestBytes, signature, key, h, installedApk, "0.2.0", installedBundle, seen)
+
+    @Test fun checkReportsWhatIsNewer() {
+        val o = evaluate()
+        assertEquals("available", o.state); assertEquals("Update available: app 0.3.0 and interface 12", o.text); assertEquals(12L, o.sequence)
+    }
+
+    @Test fun checkReportsCurrentWhenNothingIsNewer() {
+        val o = evaluate(installedApk = 3, installedBundle = 12)
+        assertEquals("current", o.state); assertEquals("Up to date · version 0.2.0", o.text)
+    }
+
+    @Test fun checkRefusesUntrustedOrMovedFiles() {
+        assertEquals("error", evaluate(key = key2).state)
+        assertEquals("error", evaluate(h = "example.com").state)
+        assertEquals("error", evaluate(manifestBytes = bytes + " ".toByteArray()).state)
+    }
+
+    @Test fun checkRefusesAnOlderManifestButAcceptsTheSameOne() {
+        assertEquals("error", evaluate(seen = 13).state)
+        assertEquals("available", evaluate(seen = 12).state)
+    }
 }
