@@ -62,7 +62,7 @@
   var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source', 'units', 'hijri', 'prayer', 'night', 'infoLayout', 'expand'];
   var LOOK_VALUES = { units: ['c', 'f'], hijri: ['off', 'on'], prayer: ['off', 'on'], night: ['off', 'auto'], infoLayout: ['corners', 'strip', 'bar'], expand: ['focus', 'ok'], clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
   var LOOK_NAMES = { bg: 'Background', layout: 'Layout', apps: 'Apps', font: 'Font', controls: 'Home controls', focus: 'Focus', material: 'Material' };
-  var VALUE_NAMES = { c: '°C', f: '°F', off: 'Off', on: 'On', auto: 'Auto', '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', corners: 'Corners', strip: 'Strip above dock', bar: 'Top bar', focus: 'On focus', ok: 'On OK', icons: 'Icons', both: 'Icons and text', text: 'Text' };
+  var VALUE_NAMES = { c: '°C', f: '°F', off: 'Off', on: 'On', auto: 'Auto', '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', corners: 'Corners', strip: 'Strip', bar: 'Top bar', focus: 'On focus', ok: 'On OK', icons: 'Icons', both: 'Icons and text', text: 'Text' };
   var UTIL = { photo: ['Photo mode', 'photo'], apps: ['All apps', 'apps'], arrange: ['Arrange', 'arrange'], settings: ['Settings', 'settings'] };
   var MSG = {};
   var SVG = {
@@ -942,7 +942,7 @@
       { id: 'controls', title: 'Home controls', horizontal: true, items: options('controls', ['text', 'icons', 'both']) },
       { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) },
       { id: 'infoLayout', title: 'Date, time and weather', horizontal: true, items: options('infoLayout', ['corners', 'strip', 'bar']),
-        reason: S.c.layout === 'dock' ? 'Strip puts them in a row above the dock; Top bar puts them beside the controls.' : 'Strip and Top bar are used with the Dock layout.' },
+        reason: S.c.layout === 'dock' ? 'Strip is a row above the dock. Top bar sits beside the controls.' : 'Strip and Top bar are used with the Dock layout.' },
       { id: 'expand', title: 'Show more details', horizontal: true, items: options('expand', ['focus', 'ok'], S.c.infoLayout === 'corners' || S.c.layout !== 'dock'),
         reason: S.c.infoLayout === 'corners' || S.c.layout !== 'dock' ? 'Choose Strip or Top bar to use details.' : 'On focus opens details as you move onto a tile; On OK waits for OK.' }
     ];
