@@ -29,6 +29,7 @@ CleanFrame TV is an Android TV port of [CleanFrame](https://github.com/nthnclrk/
 | Reference TV | Xiaomi Mi TV Q1 (MiTV-MOOQ1), Android TV 10, MediaTek MT9632, 1.8 GB RAM, 1080p interface on a 4K panel |
 | Verified there | Home button, remote navigation in List and Dock, launching apps, All apps with HDMI inputs, Photo mode, Bing photos, hold-to-close, Mi/Netflix button remapping |
 | Memory | About 165 MB PSS for the launcher including its WebView; about 70 MB of that is file-backed and reclaimable |
+| Chromecast with Google TV (HD) | Android 14, 2 GB. CleanFrame TV is the default Home after disabling Google's launcher (see [Chromecast with Google TV](#chromecast-with-google-tv)); it survived a reboot and the remote's navigation keys work. A clone remote's voice button sent nothing to the TV. |
 | Other devices | Should run on Android TV 8.0 (API 26) and newer, but untested. Google TV restricts third-party launchers more and is untested. |
 
 Reports from other devices are welcome; see [Contribute](#contribute).
@@ -58,6 +59,26 @@ CleanFrame TV should now appear whenever you press Home. The [install guide](doc
   To return to the stock launcher later, note its name before installing CleanFrame TV:
   `adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME`.
 - Uninstalling (`adb uninstall io.github.mdrzn.cleanframetv`) also hands Home back to another installed launcher.
+
+### Chromecast with Google TV
+
+Google TV ignores the `set-home-activity` step above: its own launcher always wins. The way that worked on a Chromecast with Google TV (HD, Android 14) is to disable Google's launcher and its recovery app for the current user, which leaves CleanFrame TV as the only Home app. Turn on USB debugging (or Wireless debugging) on the Chromecast first, then:
+
+```sh
+adb install CleanFrameTV-0.2.0.apk
+adb shell pm disable-user --user 0 com.google.android.apps.tv.launcherx
+adb shell pm disable-user --user 0 com.google.android.tungsten.setupwraith
+adb shell input keyevent KEYCODE_HOME
+```
+
+Reboot once and check that Home still opens CleanFrame TV. **To undo**, bring Google's launcher back:
+
+```sh
+adb shell pm enable --user 0 com.google.android.apps.tv.launcherx
+adb shell pm enable --user 0 com.google.android.tungsten.setupwraith
+```
+
+Wait until `adb shell getprop sys.boot_completed` prints `1` before running the commands (adb often shows the device as offline for a few seconds after a reboot). Some Chromecast remotes sold with clones of this model have a voice button that sends no key to the TV; the Google TV phone app can dictate instead. If the Chromecast's picture ever goes blank, press any remote button first: it may only be asleep.
 
 ### Reverting the TV tuning
 
@@ -159,6 +180,7 @@ CleanFrame TV makes no network requests unless you turn on one of these options.
 - **Uploads**: the upload page opens only while its dialog is showing, for at most 10 minutes, behind a 6-digit code, and only answers computers and phones on your own network.
 - **Weather** (Date & weather → Location): sends the place name you typed to Open-Meteo to find its coordinates, then asks it for the current weather at most every 30 minutes. No API key or account is used, and the TV's own location is never used.
 - **Prayer times** (Date & weather → Prayer times): asks Aladhan (`api.aladhan.com`) for today's and tomorrow's times once a day, sending only the place's coordinates. It needs a weather location and uses the Gulf Region calculation method.
+- **Updates** (Settings → Android TV → Updates): off unless the build was given an update-signing public key. When on, it fetches a small signed `manifest.json` and its signature from `raw.githubusercontent.com` when the launcher starts (at most once a day) and when you choose Check now, and verifies the signature before trusting anything in it. It sends no information about you. This version only reports whether an update exists; it downloads and installs nothing.
 - **Hijri date** and **Night mode** use the TV's clock and calculate everything on the TV (Night mode uses the weather's sunset and sunrise when weather is on).
 
 The optional remote-button service is an Android accessibility service. Android lets such a service see key presses so it can catch the buttons you assign. It acts only on those, passes every other key through, stores nothing and cannot read the screen. It stays off unless you enable it.

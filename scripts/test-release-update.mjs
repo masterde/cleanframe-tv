@@ -20,6 +20,12 @@ assert.ok(verifyManifest(text, sig, pub));
 assert.ok(!verifyManifest(text.replace('"sequence":5', '"sequence":6'), sig, pub));
 assert.ok(!verifyManifest(text, sig, crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({ type: 'spki', format: 'pem' })));
 
+// An encrypted key signs only with its passphrase.
+const locked = privateKey.export({ type: 'pkcs8', format: 'pem', cipher: 'aes-256-cbc', passphrase: 'correct horse' });
+assert.ok(verifyManifest(text, signManifest(text, locked, 'correct horse'), pub));
+assert.throws(() => signManifest(text, locked, 'wrong'));
+assert.throws(() => signManifest(text, locked));
+
 const other = crypto.generateKeyPairSync('ec', { namedCurve: 'secp384r1' }).privateKey.export({ type: 'pkcs8', format: 'pem' });
 assert.throws(() => signManifest(text, other), /P-256/);
 assert.throws(() => signManifest(text, crypto.generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' })), /P-256/);
