@@ -35,6 +35,7 @@ class HomeActivity : Activity() {
     private lateinit var upload: UploadServer
     private lateinit var weather: WeatherFeed
     private lateinit var prayer: PrayerFeed
+    private lateinit var updates: UpdateChecker
     private lateinit var bridge: Bridge
     private var web: WebView? = null
     private var pageReady = false
@@ -62,7 +63,10 @@ class HomeActivity : Activity() {
         upload = UploadServer(this, photos, pexels) { event("cleanframe:photos-updated") }
         weather = WeatherFeed(this) { event("cleanframe:weather-updated") }
         prayer = PrayerFeed(this, weather) { event("cleanframe:weather-updated") }
-        bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer)
+        updates = UpdateChecker(this, BuildConfig.UPDATE_PUBLIC_KEY, BuildConfig.UPDATE_BASE_URL, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME) { text ->
+            runOnUiThread { android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show() }
+        }
+        bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer, updates)
         takeDebug(intent)
         takeConfig(intent)
         createWebView()
@@ -149,6 +153,7 @@ class HomeActivity : Activity() {
         web?.requestFocus()
         feed.refresh(force = false)
         pexels.refresh(force = false)
+        updates.maybeCheck()
     }
 
     override fun onPause() {
@@ -178,6 +183,7 @@ class HomeActivity : Activity() {
         unregisterReceiver(packages)
         feed.close()
         pexels.close()
+        updates.close()
         weather.close()
         prayer.close()
         upload.stop()

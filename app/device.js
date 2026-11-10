@@ -201,6 +201,15 @@
     return value && typeof value.availMb === 'number' && typeof value.totalMb === 'number' ? value : null;
   }
   function freeMemory(done) { var b = bridge(); if (!b || !b.freeMemory) { result(PREVIEW, done); return; } try { b.freeMemory(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  /* Update status {state: 'off'|'current'|'available'|'error', version, text} from the TV, or a labelled sample in the browser preview. */
+  function updates() {
+    var b = bridge(), value;
+    if (!b) return { state: 'preview', version: '', text: 'Preview: the TV checks for updates.' };
+    if (!b.updatesJson) return null;
+    try { value = parse(b.updatesJson(), null); } catch (e) { value = null; }
+    return value && typeof value === 'object' && typeof value.text === 'string' ? value : null;
+  }
+  function checkUpdates(done) { var b = bridge(); if (!b || !b.checkUpdates) { result(PREVIEW, done); return; } try { b.checkUpdates(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
@@ -212,7 +221,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, updates: updates, checkUpdates: checkUpdates, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();
