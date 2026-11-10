@@ -641,8 +641,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .info:empty{display:none}
 .info-strip{display:flex;left:208px;width:1504px;top:556px;height:100px}
 .info-bar{display:flex;top:72px;height:64px;gap:8px;align-items:center}
-.info-tile{appearance:none;border:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:default;display:flex;flex-direction:column;justify-content:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(14,10,6,.40),0 2px 8px rgba(14,10,6,.24);background:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transition:background-color 140ms linear,transform var(--t) var(--ease)}
-.bg-light .info-tile{background:rgba(29,26,22,.05);box-shadow:none;text-shadow:none}
+.info-tile{appearance:none;border:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:default;display:flex;flex-direction:column;justify-content:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(14,10,6,.40),0 2px 8px rgba(14,10,6,.24);position:relative;isolation:isolate;background:var(--veil);box-shadow:inset 0 1px 0 rgba(255,255,255,.24);transition:transform var(--t) var(--ease)}
+.info-tile::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--plate);box-shadow:var(--plate-edge);opacity:0;pointer-events:none;transition:opacity 120ms linear}
 .info-strip .info-tile{flex:1 1 0;min-width:0;padding:0 28px;border-radius:32px;gap:2px}
 .info-strip .k-clock{flex-grow:1.15}
 .info-bar .info-tile{flex-direction:row;align-items:center;height:64px;padding:0 24px;border-radius:32px}
@@ -651,9 +651,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .it-sub{font-size:24px;line-height:30px;font-weight:500;opacity:.78;overflow:hidden;text-overflow:ellipsis}
 .info-bar .it-main{font-size:28px;line-height:36px}
 .info-bar .it-sub{display:none}
-.info-tile.is-focus{background:var(--plate);box-shadow:var(--plate-edge)}
-.f-type .info-tile.is-focus{background:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transform:scale(1.04)}
-.bg-light.f-type .info-tile.is-focus{background:rgba(29,26,22,.05)}
+.info-tile.is-focus::before{opacity:1}
+.f-type .info-tile.is-focus::before{opacity:0}
+.f-type .info-tile.is-focus{transform:scale(1.04)}
 .info-card{position:absolute;width:480px;box-sizing:border-box;padding:24px 28px;border-radius:32px;flex-direction:column;gap:6px;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:rgba(20,18,16,.52);box-shadow:inset 0 1px 0 rgba(255,255,255,.16);z-index:3}
 .bg-light .info-card{background:rgba(242,239,232,.82);box-shadow:inset 0 0 0 1px rgba(29,26,22,.08)}
 .info-card.is-on{display:flex}
@@ -666,6 +666,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .bg-light .ic-row.is-next{background:rgba(29,26,22,.08)}
 .ic-note{font-size:24px;line-height:30px;font-weight:500;opacity:.66;margin-top:6px}
 .stage.is-photo-mode .info,.stage.is-photo-mode .info-card,.stage.is-sheet .info,.stage.is-sheet .info-card{display:none}
-.bg-photo .info-tile{background:rgba(14,12,10,.30)}
-.bg-photo .info-tile.is-focus{background:var(--plate)}
-.bg-photo.f-type .info-tile.is-focus{background:rgba(14,12,10,.30)}
+/* The dock's resting veil and focus plate, per material (see .mat-veil and .plate.on-focus above). */
+.info-tile{--veil:rgba(8,14,18,.16)}
+.tone-light .info-tile{--veil:rgba(8,14,18,.27)}
+.m-tint .info-tile{--veil:rgba(8,14,18,.3)}
+.tone-light.m-tint .info-tile{--veil:rgba(8,14,18,.38)}
+.m-frost .info-tile{--veil:rgba(12,10,8,var(--fv,.12))}
+.m-tint .info-tile{box-shadow:inset 0 1px 0 rgba(255,252,246,.30),inset 0 0 0 1px rgba(255,252,246,.12),inset 0 0 20px rgba(255,252,246,.06)}
+.m-frost .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.26),rgba(255,255,255,.08) 58%,rgba(255,255,255,.10))}
+.bg-photo.db-quiet.m-frost .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.24),rgba(255,255,255,0) 52%,rgba(12,10,8,.08))}
+.bg-photo.db-quiet.m-soft .info-tile.is-focus::before,.bg-photo.db-quiet.m-tint .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 52%,rgba(255,255,255,.08))}
+.bg-dark .info-tile,.bg-light .info-tile{--veil:transparent;box-shadow:none;text-shadow:none}
