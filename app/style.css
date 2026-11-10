@@ -57,9 +57,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .bg-photo.l-list .wx-zone{color:var(--tr-ink);text-shadow:var(--tr-shadow)}
 .bg-photo .wx-zone,.bg-photo .pr-zone{isolation:isolate;text-shadow:0 0 1px rgba(0,0,0,.32),0 1px 2px rgba(0,0,0,.55),0 0 14px rgba(0,0,0,.35)}
 /* A faint, wide halo keeps these small lines readable on bright photos without a visible panel. */
-.bg-photo .wx-zone::before,.bg-photo .pr-zone::before{content:"";position:absolute;z-index:-1;inset:-32px -72px;pointer-events:none;background:radial-gradient(closest-side,rgba(8,8,10,.30),rgba(8,8,10,.16) 60%,rgba(8,8,10,0))}
-.bg-photo.tone-light .wx-zone::before,.bg-photo.tone-light .pr-zone::before{background:radial-gradient(closest-side,rgba(8,8,10,.42),rgba(8,8,10,.22) 60%,rgba(8,8,10,0))}
+.bg-photo .wx-zone::before,.bg-photo .pr-zone::before{content:"";position:absolute;z-index:-1;inset:-32px -72px;pointer-events:none;background:radial-gradient(closest-side,rgba(8,8,10,.27),rgba(8,8,10,.20) 25%,rgba(8,8,10,.11) 55%,rgba(8,8,10,.04) 80%,rgba(8,8,10,0))}
+.bg-photo.tone-light .wx-zone::before,.bg-photo.tone-light .pr-zone::before{background:radial-gradient(closest-side,rgba(8,8,10,.40),rgba(8,8,10,.30) 25%,rgba(8,8,10,.16) 55%,rgba(8,8,10,.06) 80%,rgba(8,8,10,0))}
 .bg-photo.l-list.tr-dark .wx-zone::before{display:none}
+.bg-photo.tr-mist .wx-zone::before,.bg-photo.l-list.br-mist .pr-zone::before{background:radial-gradient(closest-side,rgba(8,8,10,.46),rgba(8,8,10,.35) 25%,rgba(8,8,10,.19) 55%,rgba(8,8,10,.07) 80%,rgba(8,8,10,0))}
+.bg-photo .wx-sub,.bg-photo .wx-place,.bg-photo .pr-sub{text-shadow:0 0 2px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.6),0 0 12px rgba(0,0,0,.3)}
+.bg-photo.l-list.tr-dark .wx-sub,.bg-photo.l-list.tr-dark .wx-place{text-shadow:var(--tr-shadow)}
 .stage.is-photo-mode .pr-zone{left:140px;right:auto;bottom:72px;align-items:flex-start;text-align:left}
 .night{position:absolute;left:0;top:0;width:1920px;height:1080px;background:rgba(2,4,12,.42);opacity:0;pointer-events:none;transition:opacity 1200ms linear}
 .is-night .night{opacity:1}
