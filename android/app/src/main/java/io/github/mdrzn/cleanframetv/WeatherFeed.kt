@@ -2,6 +2,7 @@ package io.github.mdrzn.cleanframetv
 
 import android.content.Context
 import android.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -112,9 +113,9 @@ class WeatherFeed(context: Context, private val onUpdated: () -> Unit) {
             "https://geocoding-api.open-meteo.com/v1/search?name=${URLEncoder.encode(place, "UTF-8")}&count=1&language=en&format=json"
 
         fun forecastUrl(lat: Double, lon: Double) =
-            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto"
+            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=4&timezone=auto"
 
-        /** `{place, temp, code, day, hi, lo}` (hi and lo only when the response has them) from an Open-Meteo forecast response, or null when it has no current reading. */
+        /** `{place, temp, code, day, hi, lo, days}` (hi, lo and days only when the response has them; days is the next three days as `{d: "yyyy-MM-dd", code, hi, lo}`) from an Open-Meteo forecast response, or null when it has no current reading. */
         fun readingJson(wanted: String, name: String, body: JSONObject): String? {
             val current = body.optJSONObject("current") ?: return null
             if (!current.has("temperature_2m") || !current.has("weather_code")) return null
@@ -127,7 +128,27 @@ class WeatherFeed(context: Context, private val onUpdated: () -> Unit) {
             val hi = daily?.optJSONArray("temperature_2m_max")?.optDouble(0, Double.NaN) ?: Double.NaN
             val lo = daily?.optJSONArray("temperature_2m_min")?.optDouble(0, Double.NaN) ?: Double.NaN
             if (!hi.isNaN() && !lo.isNaN()) reading.put("hi", Math.round(hi).toInt()).put("lo", Math.round(lo).toInt())
+            val days = nextDays(daily)
+            if (days.length() > 0) reading.put("days", days)
             return reading.toString()
+        }
+
+        /** The days after today from the `daily` block; a day with a missing or malformed value is left out. */
+        private fun nextDays(daily: JSONObject?): JSONArray {
+            val out = JSONArray()
+            val time = daily?.optJSONArray("time") ?: return out
+            val codes = daily.optJSONArray("weather_code")
+            val highs = daily.optJSONArray("temperature_2m_max")
+            val lows = daily.optJSONArray("temperature_2m_min")
+            for (i in 1 until minOf(time.length(), 4)) {
+                val date = time.optString(i, "")
+                val code = codes?.optInt(i, -1) ?: -1
+                val hi = highs?.optDouble(i, Double.NaN) ?: Double.NaN
+                val lo = lows?.optDouble(i, Double.NaN) ?: Double.NaN
+                if (!Regex("^\\d{4}-\\d{2}-\\d{2}$").matches(date) || code < 0 || hi.isNaN() || lo.isNaN()) continue
+                out.put(JSONObject().put("d", date).put("code", code).put("hi", Math.round(hi).toInt()).put("lo", Math.round(lo).toInt()))
+            }
+            return out
         }
     }
 }

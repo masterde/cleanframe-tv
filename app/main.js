@@ -59,10 +59,10 @@
     newsreader: { name: 'Newsreader', family: 'Study Newsreader', display: 400, ui: 400, clock: 400 }
   };
   var PRIVATE_FONTS = window.CleanFramePrivateFontIDs || [], fontMetrics = {}, unavailableFonts = {}, widthCache = {}, fontsReady = false;
-  var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source', 'units', 'hijri', 'prayer', 'night'];
-  var LOOK_VALUES = { units: ['c', 'f'], hijri: ['off', 'on'], prayer: ['off', 'on'], night: ['off', 'auto'], clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
+  var LOOK_KEYS = ['bg', 'layout', 'apps', 'font', 'controls', 'focus', 'material', 'clock', 'source', 'units', 'hijri', 'prayer', 'night', 'infoLayout', 'expand'];
+  var LOOK_VALUES = { units: ['c', 'f'], hijri: ['off', 'on'], prayer: ['off', 'on'], night: ['off', 'auto'], infoLayout: ['corners', 'strip', 'bar'], expand: ['focus', 'ok'], clock: ['24', '12'], source: ['builtin', 'bing', 'pexels', 'mine'], bg: ['dark', 'light', 'photo'], layout: ['list', 'dock'], apps: ['icons', 'both', 'text'], font: Object.keys(FONTS).filter(function (id) { return id === 'manrope' || PRIVATE_FONTS.indexOf(id) >= 0; }), controls: ['icons', 'both', 'text'], focus: ['type', 'glass'], material: ['soft', 'frost', 'tint'] };
   var LOOK_NAMES = { bg: 'Background', layout: 'Layout', apps: 'Apps', font: 'Font', controls: 'Home controls', focus: 'Focus', material: 'Material' };
-  var VALUE_NAMES = { c: '°C', f: '°F', off: 'Off', on: 'On', auto: 'Auto', '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', icons: 'Icons', both: 'Icons and text', text: 'Text' };
+  var VALUE_NAMES = { c: '°C', f: '°F', off: 'Off', on: 'On', auto: 'Auto', '24': '24-hour', '12': '12-hour', builtin: 'Built-in', bing: 'Bing', pexels: 'Pexels', mine: 'Uploads', dark: 'Dark', light: 'Light', photo: 'Photo', list: 'List', dock: 'Dock', type: 'Type', glass: 'Glass', soft: 'Soft', frost: 'Frost', tint: 'Clear tint', corners: 'Corners', strip: 'Strip', bar: 'Top bar', focus: 'On focus', ok: 'On OK', icons: 'Icons', both: 'Icons and text', text: 'Text' };
   var UTIL = { photo: ['Photo mode', 'photo'], apps: ['All apps', 'apps'], arrange: ['Arrange', 'arrange'], settings: ['Settings', 'settings'] };
   var MSG = {};
   var SVG = {
@@ -87,7 +87,7 @@
   var REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var S = {
     variant: 'B', geom: 'broad', c: null, stack: null,
-    sel: null, selIdx: 0, lastUtil: 0, appsFocus: null, settingsFocus: 'background', appearanceFocus: 'bg', detailFocus: {},
+    sel: null, selIdx: 0, lastUtil: 0, lastInfo: 0, appsFocus: null, settingsFocus: 'background', appearanceFocus: 'bg', detailFocus: {},
     undo: [], removedAt: {}, note: null, err: null,
     writes: 0, failed: 0, log: [], logN: 0, lastLaunch: null, press: null,
     wallShown: null, wallPending: null, wallError: null,
@@ -99,7 +99,7 @@
     for (var i = 0; i < list.length; i++) if (list[i].toLowerCase() === v) return list[i];
     return fallback;
   }
-  function lookOf(c) { return { bg: c.bg, wall: c.wall, layout: c.layout, apps: c.apps, font: c.font, controls: c.controls, focus: c.focus, material: c.material, clock: c.clock, source: c.source, units: c.units, hijri: c.hijri, prayer: c.prayer, night: c.night }; }
+  function lookOf(c) { return { bg: c.bg, wall: c.wall, layout: c.layout, apps: c.apps, font: c.font, controls: c.controls, focus: c.focus, material: c.material, clock: c.clock, source: c.source, units: c.units, hijri: c.hijri, prayer: c.prayer, night: c.night, infoLayout: c.infoLayout, expand: c.expand }; }
   function materialApplies(c) { c = c || S.c; return c.bg === 'photo' && (c.layout === 'dock' || c.focus === 'glass'); }
   function derivedTheme() { return S.c.layout === 'list' ? 'list' : 'shore'; }
 
@@ -359,7 +359,7 @@
       focus: pick(modern.focus, LOOK_VALUES.focus, legacyList ? 'type' : 'glass'), material: pick(modern.material, LOOK_VALUES.material, 'soft'),
       font: pick(modern.font, LOOK_VALUES.font, 'manrope'), clock: pick(modern.clock, LOOK_VALUES.clock, FrameDevice.is24Hour && !FrameDevice.is24Hour() ? '12' : '24'),
       source: pick(modern.source, LOOK_VALUES.source, 'builtin'), units: pick(modern.units, LOOK_VALUES.units, 'c'), hijri: pick(modern.hijri, LOOK_VALUES.hijri, 'off'),
-      prayer: pick(modern.prayer, LOOK_VALUES.prayer, 'off'), night: pick(modern.night, LOOK_VALUES.night, 'off'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
+      prayer: pick(modern.prayer, LOOK_VALUES.prayer, 'off'), night: pick(modern.night, LOOK_VALUES.night, 'off'), infoLayout: pick(modern.infoLayout, LOOK_VALUES.infoLayout, 'corners'), expand: pick(modern.expand, LOOK_VALUES.expand, 'focus'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
       home: h, recent: recent, lastApp: h.indexOf(s.lastApp) >= 0 ? s.lastApp : h[0],
       mode: pick(s.mode, MODES.map(function (m) { return m.id; }), 'fixed')
     };
@@ -581,25 +581,49 @@
     key: function (t, k) {
       var f = t.f, h = S.c.home, U = utils(), x = axes(), i = ensureSel();
       if (S.c.layout === 'list') { listHomeKey(t, k, i, U); return; }
+      var L = infoLayout(), I = infoItems();
+      if (f.zone === 'info' && I.length) {
+        f.n = clamp(f.n || 0, 0, I.length - 1);
+        if (k === 'left') { if (f.n > 0) { f.n--; f.open = null; } }
+        else if (k === 'right') {
+          if (f.n < I.length - 1) { f.n++; f.open = null; }
+          else if (L === 'bar') { f.zone = 'util'; f.u = 0; S.lastUtil = 0; f.open = null; }
+        }
+        else if (k === 'up') { if (L === 'strip') { f.zone = 'util'; f.u = clamp(S.lastUtil, 0, U.length - 1); f.open = null; } }
+        else if (k === 'down') { f.zone = 'apps'; f.open = null; }
+        else if (k === 'back') { if (f.open) f.open = null; else f.zone = 'apps'; }
+        else if (k === 'ok' && S.c.expand === 'ok') f.open = f.open === I[f.n] ? null : I[f.n];
+        S.lastInfo = f.n;
+        return;
+      }
       if (f.zone === 'util') {
         f.u = clamp(f.u, 0, U.length - 1);
-        if (k === x.prev) { if (f.u > 0) f.u--; else f.zone = 'apps'; }
+        if (k === x.prev) { if (f.u > 0) f.u--; else if (L === 'bar' && I.length) { f.zone = 'info'; f.n = I.length - 1; S.lastInfo = f.n; } else f.zone = 'apps'; }
         else if (k === x.next) { if (f.u < U.length - 1) f.u++; else f.zone = 'apps'; }
+        else if (k === x.inn && L === 'strip' && I.length) { f.zone = 'info'; f.n = clamp(S.lastInfo, 0, I.length - 1); }
         else if (k === x.inn || k === 'back') f.zone = 'apps';
         else if (k === 'ok') { S.lastUtil = f.u; utilAction(U[f.u]); return; }
         S.lastUtil = f.u;
         return;
       }
       f.zone = 'apps';
-      if (k === x.out) { f.zone = 'util'; f.u = clamp(S.lastUtil, 0, U.length - 1); }
+      if (k === x.out && L === 'strip' && I.length) { f.zone = 'info'; f.n = clamp(S.lastInfo, 0, I.length - 1); }
+      else if (k === x.out) { f.zone = 'util'; f.u = clamp(S.lastUtil, 0, U.length - 1); }
       else if (k === 'back') { /* Back on Home stays on Home. */ }
       else if (!h.length) { if (k === 'ok') addAppsRoute(); }
       else if (k === x.prev && i > 0) setSel(h[i - 1]);
       else if (k === x.next && i < h.length - 1) setSel(h[i + 1]);
       else if (k === 'ok') launch(S.sel);
     },
+    norm: function (t) {
+      var I;
+      if (t.f.zone !== 'info') return;
+      I = infoItems();
+      if (!I.length) { t.f.zone = 'apps'; t.f.open = null; } else t.f.n = clamp(t.f.n || 0, 0, I.length - 1);
+    },
     point: function (t, z, i) {
-      if (z === 'util') { t.f.zone = 'util'; t.f.u = i; S.lastUtil = i; }
+      if (z === 'info') { t.f.zone = 'info'; t.f.n = i; S.lastInfo = i; }
+      else if (z === 'util') { t.f.zone = 'util'; t.f.u = i; S.lastUtil = i; }
       else if (z === 'app') { t.f.zone = 'apps'; setSel(S.c.home[i]); }
       else if (z === 'empty') t.f.zone = 'apps';
       else return;
@@ -916,7 +940,11 @@
       { id: 'layout', title: 'Layout', horizontal: true, items: options('layout', ['list', 'dock']) },
       { id: 'apps', title: 'App display', horizontal: true, items: options('apps', ['text', 'icons', 'both']) },
       { id: 'controls', title: 'Home controls', horizontal: true, items: options('controls', ['text', 'icons', 'both']) },
-      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) }
+      { id: 'clock', title: 'Clock', horizontal: true, items: options('clock', ['24', '12']) },
+      { id: 'infoLayout', title: 'Date, time and weather', horizontal: true, items: options('infoLayout', ['corners', 'strip', 'bar']),
+        reason: S.c.layout === 'dock' ? 'Strip is a row above the dock. Top bar sits beside the controls.' : 'Strip and Top bar are used with the Dock layout.' },
+      { id: 'expand', title: 'Show more details', horizontal: true, items: options('expand', ['focus', 'ok'], S.c.infoLayout === 'corners' || S.c.layout !== 'dock'),
+        reason: S.c.infoLayout === 'corners' || S.c.layout !== 'dock' ? 'Choose Strip or Top bar to use details.' : 'On focus opens details as you move onto a tile; On OK waits for OK.' }
     ];
     if (t.group === 'info') return [
       { id: 'weather', title: 'Weather', items: [{ action: 'layout.weather', label: 'Location', description: FrameDevice.weatherPlace && FrameDevice.weatherPlace() || 'Off. Enter a city to show the weather under the clock' }] },
@@ -1120,7 +1148,7 @@
 
   /* ---------- Rendering ---------- */
   var $ = function (id) { return document.getElementById(id); };
-  var stage = $('stage'), homeEl = $('home'), caption = $('caption'), wxZone = $('wxZone'), prZone = $('prZone'), utilsEl = $('utils'), photoCaptionEl = $('photoCaption');
+  var stage = $('stage'), homeEl = $('home'), caption = $('caption'), wxZone = $('wxZone'), prZone = $('prZone'), utilsEl = $('utils'), infoEl = $('info'), infoCard = $('infoCard'), photoCaptionEl = $('photoCaption');
   var utilFocusLabel = $('utilFocusLabel'), utilFocusKey = '', appFocusName = $('appFocusName');
   var dock = $('dock'), shelf = $('shelf'), track = $('track'), plate = $('plate'), matScrim = $('matScrim'), dockEmpty = $('dockEmpty');
   var cueL = $('cueL'), cueR = $('cueR'), dockAction = $('dockAction');
@@ -1165,7 +1193,7 @@
     if (FrameDevice.photoSource) FrameDevice.photoSource(S.c.source);
     var t = top(), sheet = !!V[t.id].sheet, shown = wall(S.shown ? S.shown.wall : S.c.wall), palette = ADAPTIVE_INK[shown.id];
     var adaptive = applyAdaptiveInk(palette), tr = adaptive && palette.tr ? palette.tr.pol : shown.ut.tr, br = adaptive && palette.br ? palette.br.pol : shown.ut.br;
-    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '') + (S.photoMode ? ' is-photo-mode' : '') + (nightNow() ? ' is-night' : '');
+    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' i-' + infoLayout() + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '') + (S.photoMode ? ' is-photo-mode' : '') + (nightNow() ? ' is-night' : '');
     setHTML(photoCaptionEl, S.photoMode && shown.caption ? esc(shown.caption) : '');
     if (!adaptive && shown.clockInk) stage.style.setProperty('--clock-ink', shown.clockInk);
     else stage.style.removeProperty('--clock-ink');
@@ -1190,7 +1218,7 @@
   function homeState(t) {
     var h = S.c.home, hs = { mode: 'browse', zone: null, i: Math.max(0, ensureSel()), u: -1, lifted: false, from: -1, arr: null, items: h.map(function (id) { return { key: id, kind: 'app', id: id }; }) };
     if (isSettingsDetail(t)) hs.zone = 'preview';
-    else if (t.id === 'home') { hs.zone = t.f.zone; hs.u = t.f.u; }
+    else if (t.id === 'home') { hs.zone = t.f.zone; hs.u = t.f.u; hs.n = t.f.n || 0; hs.open = t.f.open || null; }
     return hs;
   }
 
@@ -1198,6 +1226,7 @@
     var hs = homeState(t);
     renderCaption(t, hs);
     renderUtils(hs);
+    renderInfo(hs);
     if (S.c.layout === 'list') renderList(hs);
     else { photoMode = null; renderDock(hs); }
     renderAppFocusName(hs);
@@ -1286,6 +1315,100 @@
   function prayerZoneHtml() {
     var hijri = S.c.hijri === 'on' ? hijriText() : '', prayer = S.c.prayer === 'on' ? prayerText() : '';
     return (hijri ? '<span class="pr-sub">' + esc(hijri) + '</span>' : '') + (prayer ? '<span class="pr-main">' + esc(prayer) + '</span>' : '');
+  }
+  /* ---------- Info tiles: time, Hijri date, prayer and weather as focusable glass tiles (Strip above the dock, or Top bar) ---------- */
+  var INFO_NAMES = { clock: 'Time and date', hijri: 'Hijri date', prayer: 'Prayer times', weather: 'Weather' };
+  /* Strip and Top bar belong to the Dock layout; the List layout keeps the corner text. */
+  function infoLayout() { return S.c && S.c.layout === 'dock' ? S.c.infoLayout : 'corners'; }
+  function infoItems() {
+    var layout = infoLayout(), out = [];
+    if (layout === 'corners') return out;
+    if (layout === 'strip') out.push('clock');
+    if (S.c.hijri === 'on' && hijriText()) out.push('hijri');
+    if (S.c.prayer === 'on' && prayerText()) out.push('prayer');
+    if (FrameDevice.weather && FrameDevice.weather()) out.push('weather');
+    return out;
+  }
+  function clockWithPeriod() { return clockText() + (S.c.clock === '12' ? ' ' + (new Date().getHours() < 12 ? 'AM' : 'PM') : ''); }
+  function fullDate() { return dateText() + ' ' + new Date().getFullYear(); }
+  /* "04:28" as shown on Home: 24-hour, or "4:28 AM". */
+  function timeLabel(hhmm) {
+    var parts = String(hhmm || '').split(':'), h = +parts[0], m = +parts[1];
+    if (isNaN(h) || isNaN(m)) return '';
+    if (S.c.clock !== '12') return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+    return (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m + ' ' + (h < 12 ? 'AM' : 'PM');
+  }
+  function nextPrayerName() {
+    var p = FrameDevice.prayer ? FrameDevice.prayer() : null, d = new Date(), now = d.getHours() * 60 + d.getMinutes(), i, parts, at;
+    if (!p) return '';
+    for (i = 0; i < PRAYERS.length; i++) { parts = String(p.t[PRAYERS[i]] || '').split(':'); at = +parts[0] * 60 + +parts[1]; if (!isNaN(at) && at > now) return PRAYERS[i]; }
+    return 'Fajr';
+  }
+  function weatherLine(w) { var words = weatherWords(w.code, w.day); return degrees(w.temp) + (words ? ' ' + words : ''); }
+  function infoTileHtml(id, layout) {
+    var w, hi;
+    if (id === 'clock') return '<span class="it-main">' + esc(clockWithPeriod()) + '</span><span class="it-sub">' + esc(dateText()) + '</span>';
+    if (id === 'hijri') return '<span class="it-main">' + esc(hijriText()) + '</span><span class="it-sub">Hijri date</span>';
+    if (id === 'prayer') return '<span class="it-main">' + esc(prayerText()) + '</span><span class="it-sub">Next prayer</span>';
+    w = FrameDevice.weather(); hi = typeof w.hi === 'number' && typeof w.lo === 'number' ? degrees(w.lo) + '–' + degrees(w.hi) + (w.place ? ' · ' + w.place : '') : w.place || '';
+    return '<span class="it-main">' + weatherIcon(w.code, w.day) + '<span>' + esc(weatherLine(w)) + '</span></span><span class="it-sub">' + esc(hi) + '</span>';
+  }
+  function infoRows(rows) { return rows.map(function (r) { return '<span class="ic-row' + (r[2] ? ' is-next' : '') + '"><span>' + esc(r[0]) + '</span><span>' + esc(r[1]) + '</span></span>'; }).join(''); }
+  /* The expanded card: more detail for the focused tile. Only data the TV already has. */
+  function infoCardHtml(id) {
+    var p, w, next, rows = [];
+    if (id === 'clock') return '<span class="ic-title">' + esc(clockWithPeriod()) + '</span>' + infoRows([[fullDate(), ''], [(Intl.DateTimeFormat().resolvedOptions().timeZone || '').replace(/_/g, ' '), '']]);
+    if (id === 'hijri') return '<span class="ic-title">' + esc(hijriText()) + '</span>' + infoRows([[fullDate(), ''], ['Umm al-Qura calendar', '']]);
+    if (id === 'prayer') {
+      p = FrameDevice.prayer(); next = nextPrayerName();
+      PRAYERS.forEach(function (name) { rows.push([name, timeLabel(p.t[name]), name === next]); });
+      return '<span class="ic-title">' + esc(prayerText()) + '</span>' + infoRows(rows) + (weatherPlaceLine() ? '<span class="ic-note">' + esc(weatherPlaceLine()) + '</span>' : '');
+    }
+    w = FrameDevice.weather();
+    return '<span class="ic-title">' + weatherIcon(w.code, w.day) + '<span>' + esc(weatherLine(w)) + '</span></span>' + weatherRows(w) + (w.place ? '<span class="ic-note">' + esc(w.place) + '</span>' : '');
+  }
+  /* Today's range, then the next days when the TV sent them (app 0.3.1 and later); older apps only have today's high and low. */
+  function weatherRows(w) {
+    var html = '', range = typeof w.hi === 'number' && typeof w.lo === 'number';
+    if (range) html += '<span class="ic-row"><span>Today</span><span>' + esc(degrees(w.lo) + '–' + degrees(w.hi)) + '</span></span>';
+    (Array.isArray(w.days) ? w.days : []).forEach(function (d, i) {
+      var p = String(d && d.d).split('-'), name = i === 0 ? 'Tomorrow' : DAYS[new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+      if (typeof d.code !== 'number' || typeof d.hi !== 'number' || typeof d.lo !== 'number' || !name) return;
+      html += '<span class="ic-row"><span>' + esc(name) + '</span><span class="ic-day">' + weatherIcon(d.code, true) + esc(degrees(d.lo) + '–' + degrees(d.hi)) + '</span></span>';
+    });
+    return html;
+  }
+  function weatherPlaceLine() { var w = FrameDevice.weather ? FrameDevice.weather() : null; return w && w.place ? w.place : ''; }
+  /* The dock's glass: its pre-blurred photo (IMG.mat) behind the material veil, lined up with the screen so a tile at (x, y) shows the same pixels as the photo behind it. */
+  function matGlass(el) {
+    var src = IMG.mat && IMG.mat.src, x = el.offsetLeft, y = el.offsetTop, p = el.offsetParent;
+    if (S.c.bg !== 'photo' || !src) { el.style.backgroundImage = ''; return; }
+    while (p && p !== stage) { x += p.offsetLeft; y += p.offsetTop; p = p.offsetParent; }
+    el.style.backgroundImage = 'linear-gradient(var(--veil),var(--veil)),url("' + src + '")';
+    el.style.backgroundPosition = '0 0,' + (-x) + 'px ' + (-y) + 'px';
+    el.style.backgroundSize = 'auto,1920px 1080px';
+  }
+  function renderInfo(hs) {
+    var I = infoItems(), layout = infoLayout(), html = '', id, tile, x, w;
+    infoEl.className = 'info info-' + layout + (hs.zone === 'info' ? ' is-awake' : '');
+    infoCard.className = 'info-card';
+    if (!I.length) { setHTML(infoEl, ''); return; }
+    I.forEach(function (key, i) {
+      html += '<button type="button" tabindex="-1" class="info-tile k-' + key + (hs.zone === 'info' && hs.n === i ? ' is-focus' : '') + '" data-z="info" data-i="' + i + '" data-action="info.' + key + '" aria-label="' + esc(INFO_NAMES[key]) + '">' + infoTileHtml(key, layout) + '</button>';
+    });
+    setHTML(infoEl, html);
+    if (layout === 'bar' && utilsEl.offsetLeft > 0) infoEl.style.right = (1920 - utilsEl.offsetLeft + 12) + 'px';
+    Array.prototype.forEach.call(infoEl.children, matGlass);
+    id = hs.zone === 'info' ? I[hs.n] : null;
+    if (!id || !(S.c.expand === 'focus' || hs.open === id)) return;
+    setHTML(infoCard, infoCardHtml(id));
+    tile = infoEl.children[hs.n];
+    if (!tile) return;
+    w = 480;
+    x = clamp(infoEl.offsetLeft + tile.offsetLeft, 100, 1920 - 100 - w);
+    infoCard.style.left = x + 'px';
+    infoCard.className = 'info-card is-on info-card-' + layout;
+    matGlass(infoCard);
   }
   /* Night mode (Auto): from sunset to sunrise by the weather, else 22:00 to 06:00. */
   function nightNow() {

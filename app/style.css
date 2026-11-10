@@ -633,3 +633,57 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .stage.is-photo-mode .utils,.stage.is-photo-mode .util-focus-label,.stage.is-photo-mode .app-focus-name,.stage.is-photo-mode .ut-lens,.stage.is-photo-mode .dock,.stage.is-photo-mode .cue,.stage.is-photo-mode .dock-action,.stage.is-photo-mode .ph-scene,.stage.is-photo-mode .bg .scrim,.stage.is-photo-mode .bg .shade,.stage.is-photo-mode .bg .ph-dim,.stage.is-photo-mode .bg .ph-scrim,.stage.is-photo-mode .bg .ph-col,.stage.is-photo-mode .bg .ut-dim{opacity:0!important;pointer-events:none}
 .photo-caption{position:absolute;right:140px;bottom:72px;max-width:900px;text-align:right;font-family:var(--font-ui-family),Manrope,sans-serif;font-weight:500;font-size:26px;line-height:1.35;color:#fffbf4;text-shadow:0 1px 2px rgba(14,10,6,.5),0 2px 10px rgba(14,10,6,.32);opacity:0;transition:opacity .45s ease;pointer-events:none}
 .stage.is-photo-mode .photo-caption{opacity:.9}
+
+/* Info tiles (Strip above the dock / Top bar): the dock's glass focus applied to time, Hijri date, prayer and weather. */
+.info,.info-card{display:none}
+.i-strip .caption .clock,.i-strip .caption .cap-date,.i-strip .wx-zone,.i-strip .pr-zone,.i-bar .wx-zone,.i-bar .pr-zone{display:none}
+.info{position:absolute;gap:16px;align-items:stretch;font-family:Manrope,Arial,sans-serif;color:var(--ink)}
+.info:empty{display:none}
+.info-strip{display:flex;left:208px;width:1504px;top:556px;height:100px}
+.info-bar{display:flex;top:72px;height:64px;gap:8px;align-items:center}
+.info-tile{appearance:none;border:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:default;display:flex;flex-direction:column;justify-content:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(14,10,6,.40),0 2px 8px rgba(14,10,6,.24);position:relative;isolation:isolate;background:var(--veil);box-shadow:inset 0 1px 0 rgba(255,255,255,.24);transition:transform var(--t) var(--ease)}
+.info-tile::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--plate);box-shadow:var(--plate-edge);opacity:0;pointer-events:none;transition:opacity 120ms linear}
+.info-strip .info-tile{flex:1 1 0;min-width:0;padding:0 28px;border-radius:32px;gap:2px}
+.info-strip .k-clock{flex-grow:1.15}
+.info-bar .info-tile{flex-direction:row;align-items:center;height:64px;padding:0 24px;border-radius:32px}
+.it-main{display:flex;align-items:center;gap:12px;font-size:32px;line-height:40px;font-weight:500;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis}
+.it-main .wx-ico{width:34px;height:34px}
+.it-sub{font-size:24px;line-height:30px;font-weight:500;opacity:.78;overflow:hidden;text-overflow:ellipsis}
+.info-bar .it-main{font-size:28px;line-height:36px}
+.info-bar .it-sub{display:none}
+.info-tile.is-focus::before{opacity:1}
+.f-type .info-tile.is-focus::before{opacity:0}
+.f-type .info-tile.is-focus{transform:scale(1.04)}
+.info-card{position:absolute;width:480px;box-sizing:border-box;padding:24px 28px;border-radius:32px;flex-direction:column;gap:6px;font-family:Manrope,Arial,sans-serif;color:var(--ink);background:rgba(20,18,16,.52);box-shadow:inset 0 1px 0 rgba(255,255,255,.16);z-index:3}
+.bg-light .info-card{background:rgba(242,239,232,.82);box-shadow:inset 0 0 0 1px rgba(29,26,22,.08)}
+.info-card.is-on{display:flex}
+.info-card-strip{bottom:538px}
+.info-card-bar{top:148px}
+.ic-title{display:flex;align-items:center;gap:12px;font-size:36px;line-height:44px;font-weight:500;letter-spacing:-.5px;margin-bottom:6px}
+.ic-title .wx-ico{width:40px;height:40px}
+.ic-row{display:flex;justify-content:space-between;gap:24px;font-size:28px;line-height:40px;font-weight:500;opacity:.8}
+.ic-row.is-next{opacity:1;border-radius:14px;background:rgba(255,255,255,.14);margin:0 -12px;padding:0 12px}
+.bg-light .ic-row.is-next{background:rgba(29,26,22,.08)}
+.ic-note{font-size:24px;line-height:30px;font-weight:500;opacity:.66;margin-top:6px}
+.stage.is-photo-mode .info,.stage.is-photo-mode .info-card,.stage.is-sheet .info,.stage.is-sheet .info-card{display:none}
+/* The dock's resting veil and focus plate, per material (see .mat-veil and .plate.on-focus above). */
+.info-tile{--veil:rgba(8,14,18,.16)}
+.tone-light .info-tile{--veil:rgba(8,14,18,.27)}
+.m-tint .info-tile{--veil:rgba(8,14,18,.3)}
+.tone-light.m-tint .info-tile{--veil:rgba(8,14,18,.38)}
+.m-frost .info-tile{--veil:rgba(12,10,8,var(--fv,.12))}
+.m-tint .info-tile{box-shadow:inset 0 1px 0 rgba(255,252,246,.30),inset 0 0 0 1px rgba(255,252,246,.12),inset 0 0 20px rgba(255,252,246,.06)}
+.m-frost .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.26),rgba(255,255,255,.08) 58%,rgba(255,255,255,.10))}
+.bg-photo.db-quiet.m-frost .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.24),rgba(255,255,255,0) 52%,rgba(12,10,8,.08))}
+.bg-photo.db-quiet.m-soft .info-tile.is-focus::before,.bg-photo.db-quiet.m-tint .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 52%,rgba(255,255,255,.08))}
+.bg-dark .info-tile,.bg-light .info-tile{--veil:transparent;box-shadow:none;text-shadow:none}
+.info-card{--veil:rgba(8,14,18,.3);background-repeat:no-repeat}
+.tone-light .info-card{--veil:rgba(8,14,18,.4)}
+.info-tile{background-repeat:no-repeat}
+.registered-material .info-tile,.registered-material .info-card{--veil:transparent}
+.m-tint .info-card{--veil:rgba(8,14,18,.3)}
+.tone-light.m-tint .info-card{--veil:rgba(8,14,18,.38)}
+.m-frost .info-card{--veil:rgba(12,10,8,var(--fv,.12))}
+.bg-dark .info-card,.bg-light .info-card{--veil:transparent}
+.ic-day{display:flex;align-items:center;gap:10px}
+.ic-day .wx-ico{width:30px;height:30px}
