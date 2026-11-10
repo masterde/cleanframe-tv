@@ -39,6 +39,7 @@ class HomeActivity : Activity() {
     private lateinit var prayer: PrayerFeed
     private lateinit var updates: UpdateChecker
     private lateinit var bundles: BundleStore
+    private lateinit var receiver: ReceiverInstaller
     private val handler = Handler(Looper.getMainLooper())
     private var servedBundle = 0
     private var generation = 0
@@ -76,10 +77,11 @@ class HomeActivity : Activity() {
             // commit(): the launch counter must survive the process being killed by a crashing bundle.
             override fun put(key: String, value: String) { prefs.edit().putString(key, value).commit() }
         })
-        updates = UpdateChecker(this, BuildConfig.UPDATE_PUBLIC_KEY, BuildConfig.UPDATE_BASE_URL, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME, bundles, { runOnUiThread { rebuildWeb() } }) { text ->
+        updates = UpdateChecker(this, BuildConfig.UPDATE_PUBLIC_KEY, BuildConfig.UPDATE_BASE_URL, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME, bundles, { runOnUiThread { rebuildWeb() } }, { text ->
             runOnUiThread { android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show() }
-        }
-        bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer, updates)
+        }, { event("cleanframe:status-changed") })
+        receiver = ReceiverInstaller(this, catalog, { text -> runOnUiThread { android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show() } }, { event("cleanframe:status-changed") })
+        bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer, updates, receiver)
         takeDebug(intent)
         takeConfig(intent)
         createWebView()
@@ -230,6 +232,7 @@ class HomeActivity : Activity() {
         feed.close()
         pexels.close()
         updates.close()
+        receiver.close()
         weather.close()
         prayer.close()
         upload.stop()

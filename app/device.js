@@ -212,6 +212,16 @@
   function checkUpdates(done) { var b = bridge(); if (!b || !b.checkUpdates) { result(PREVIEW, done); return; } try { b.checkUpdates(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   /* Tells the TV this interface rendered, so a downloaded bundle is kept. No-op in the browser preview and for the built-in interface. */
   function appReady() { var b = bridge(); if (b && b.appReady) { try { b.appReady(); } catch (e) { /* the shell's watchdog handles a silent page */ } } }
+  /* AirPlay receiver (a separate open-source app): {installed, version, busy, text}, or a labelled sample in the browser preview. */
+  function receiver() {
+    var b = bridge(), value;
+    if (!b) return { installed: false, version: '', busy: false, text: 'Preview: the TV installs the AirPlay receiver.' };
+    if (!b.receiverJson) return null;
+    try { value = parse(b.receiverJson(), null); } catch (e) { value = null; }
+    return value && typeof value === 'object' && typeof value.text === 'string' ? value : null;
+  }
+  function receiverPrimary(done) { var b = bridge(); if (!b || !b.receiverPrimary) { result(PREVIEW, done); return; } try { b.receiverPrimary(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  function receiverUpdate(done) { var b = bridge(); if (!b || !b.receiverUpdate) { result(PREVIEW, done); return; } try { b.receiverUpdate(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
@@ -223,7 +233,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, updates: updates, checkUpdates: checkUpdates, appReady: appReady, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, updates: updates, checkUpdates: checkUpdates, receiver: receiver, receiverPrimary: receiverPrimary, receiverUpdate: receiverUpdate, appReady: appReady, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();

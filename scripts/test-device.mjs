@@ -205,3 +205,26 @@ assert.deepEqual(plain(dev.orderByKeyword(mixed, 'ocean, city at night\nmountain
 assert.deepEqual(plain(dev.orderByKeyword(mixed, '')).map((p) => p.id), mixed.map((p) => p.id));
 assert.deepEqual(plain(dev.orderByKeyword(null, 'ocean')), []);
 console.log('Pexels keyword rotation checks passed.');
+
+// AirPlay receiver adapters: a labelled sample in the preview, parsed JSON on the TV, bridge methods called, old apps degrade to null.
+{
+  const none = load(null);
+  assert.match(none.receiver().text, /^Preview/);
+  none.receiverPrimary((err) => assert.match(err.message, /^Preview/));
+  const calls = [];
+  const on = load(fakeBridge([], {
+    receiverJson: () => JSON.stringify({ installed: true, version: '0.0.36', busy: false, text: 'Installed · version 0.0.36. OK opens it' }),
+    receiverPrimary: () => { calls.push('primary'); },
+    receiverUpdate: () => { calls.push('update'); }
+  }));
+  assert.equal(plain(on.receiver()).installed, true);
+  on.receiverPrimary((err) => assert.equal(err, null));
+  on.receiverUpdate((err) => assert.equal(err, null));
+  assert.deepEqual(calls, ['primary', 'update']);
+  const old = load(fakeBridge([]));
+  assert.equal(old.receiver(), null);
+  old.receiverPrimary((err) => assert.match(err.message, /^Preview/));
+  assert.equal(load(fakeBridge([], { receiverJson: () => 'not json' })).receiver(), null);
+  assert.equal(load(fakeBridge([], { receiverJson: () => '{"installed":true}' })).receiver(), null);
+}
+console.log('AirPlay receiver adapter checks passed.');
