@@ -1794,7 +1794,7 @@
     var f = list.querySelector('.is-focus'), top, bottom, margin = 24;
     if (!f || list.scrollHeight <= list.clientHeight) { list.scrollTop = 0; return; }
     top = f.offsetTop; bottom = top + f.offsetHeight;
-    if (f.closest) { var sec = f.closest('.setting-section'); if (sec && sec.offsetTop < top) top = sec.offsetTop; }
+    if (f.closest) { var sec = f.closest('.setting-section'); if (sec && sec.offsetTop < top && top - sec.offsetTop < 240) top = sec.offsetTop; } /* the heading only counts when it is close: a long single section (Android TV) must still scroll */
     if (top - margin < list.scrollTop) list.scrollTop = Math.max(0, top - margin);
     else if (bottom + margin > list.scrollTop + list.clientHeight) list.scrollTop = bottom + margin - list.clientHeight;
   }
