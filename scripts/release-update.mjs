@@ -5,7 +5,8 @@
 //
 //   node scripts/release-update.mjs --key ~/safe/update-signing.pem --out ../cleanframe-tv-updates [--apk path/to.apk] [--base https://…/updates/]
 //
-// The private key must be an unencrypted-or-passphrase-free PEM readable by Node; keep it OUTSIDE this repository (the script refuses otherwise).
+// The private key is a PEM (PKCS#8, optionally encrypted) kept OUTSIDE this repository (the script refuses otherwise). For an encrypted key give the
+// passphrase with CLEANFRAME_UPDATE_KEY_PASSPHRASE, or with --passphrase-keychain <service> to read it from the macOS login Keychain.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -26,8 +27,8 @@ export function buildManifest({ sequence, issued, base, bundle, apk }) {
 }
 
 /** ECDSA P-256 / SHA-256, DER signature, base64: what UpdateVerifier checks. */
-export function signManifest(manifestText, privateKeyPem) {
-  const key = crypto.createPrivateKey(privateKeyPem);
+export function signManifest(manifestText, privateKeyPem, passphrase) {
+  const key = crypto.createPrivateKey(passphrase ? { key: privateKeyPem, passphrase } : privateKeyPem);
   if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails.namedCurve !== 'prime256v1') throw new Error('The update-signing key must be an ECDSA P-256 (prime256v1) key');
   return crypto.sign('sha256', Buffer.from(manifestText), { key, dsaEncoding: 'der' }).toString('base64');
 }
@@ -79,7 +80,14 @@ function main() {
   }
   const text = buildManifest({ sequence, issued: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), base,
     bundle: { version: bundleVersion, file: bundleFile, sha256: sha256(bundleBytes), size: bundleBytes.length, minApk: versionCode }, apk });
-  const signature = signManifest(text, fs.readFileSync(keyPath));
+  let passphrase = process.env.CLEANFRAME_UPDATE_KEY_PASSPHRASE;
+  const service = opt('--passphrase-keychain');
+  if (!passphrase && service) {
+    const r = spawnSync('security', ['find-generic-password', '-s', service, '-w'], { encoding: 'utf8' });
+    if (r.status !== 0) fail(`no Keychain item for service ${service}`);
+    passphrase = r.stdout.replace(/\n$/, '');
+  }
+  const signature = signManifest(text, fs.readFileSync(keyPath), passphrase);
   fs.writeFileSync(manifestFile, text);
   fs.writeFileSync(path.join(outDir, 'manifest.json.sig'), signature);
   console.log(`Wrote sequence ${sequence}, bundle ${bundleVersion}${apk ? `, APK ${versionName}` : ''} to ${outDir}. Review, then commit and push that clone yourself.`);
