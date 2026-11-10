@@ -552,7 +552,7 @@
   function openSettings() { push({ id: 'settings', f: { id: S.settingsFocus } }); }
   function openAppearance(group) {
     var axis = { background: 'bg', layout: 'layout', info: 'units', typography: 'font', focus: 'focus' }[group];
-    var action = S.detailFocus[group] || (axis ? 'choice.' + axis + '.' + S.c[axis] : group === 'rotation' ? 'rotation.' + S.c.mode : 'android.settings');
+    var action = S.detailFocus[group] || (axis ? 'choice.' + axis + '.' + S.c[axis] : group === 'rotation' ? 'rotation.' + S.c.mode : group === 'airplay' ? 'receiver.primary' : 'android.settings');
     push({ id: 'appearance', group: group, f: { action: action } });
   }
   function openMessage(key) { push({ id: 'message', msg: key, f: { b: 0 } }); }
@@ -916,7 +916,7 @@
     if (id === 'editor') openEditor('settings');
     else openAppearance(id);
   }
-  var DETAIL_NAMES = { background: 'Background', layout: 'Layout', info: 'Date & weather', typography: 'Typography', focus: 'Focus', rotation: 'Rotation', android: 'Android TV', buttons: 'Remote buttons' };
+  var DETAIL_NAMES = { background: 'Background', layout: 'Layout', info: 'Date & weather', typography: 'Typography', focus: 'Focus', rotation: 'Rotation', android: 'Android TV', buttons: 'Remote buttons', airplay: 'AirPlay receiver' };
   function choice(axis, value, disabled) {
     return { action: axis === 'mode' ? 'rotation.' + value : 'choice.' + axis + '.' + value, axis: axis, value: value, disabled: !!disabled,
       label: axis === 'font' ? FONTS[value].name : axis === 'mode' ? MODES.filter(function (m) { return m.id === value; })[0].name : value === 'both' ? 'Both' : VALUE_NAMES[value] };
@@ -962,13 +962,16 @@
     if (t.group === 'rotation') return [{ id: 'mode', title: '', items: options('mode', MODES.map(function (m) { return m.id; }), flat),
       reason: flat ? 'Choose Photo in Background to use rotation.' : 'Timed changes pause while Settings or another panel is open.' }];
     if (t.group === 'buttons') return buttonSections();
+    if (t.group === 'airplay') return [{ id: 'receiver', title: '', items: [
+      { action: 'receiver.primary', label: receiverInstalled() ? 'Open' : 'Install', description: receiverDescription() },
+      { action: 'receiver.update', label: 'Check for update', description: 'Install a newer version if one is available', disabled: !receiverInstalled() }
+    ] }];
     return [{ id: 'android', title: '', items: [
       { action: 'android.settings', label: 'TV settings', description: 'Picture, sound, network and inputs' },
       { action: 'android.memory', label: 'Free up memory', description: memoryDescription() },
       { action: 'android.buttons', label: 'Remote buttons', description: buttonsSummary() },
       { action: 'android.updates', label: 'Updates', description: updatesDescription() },
       { action: 'android.receiver', label: 'AirPlay receiver', description: receiverDescription() },
-      { action: 'android.receiver-update', label: 'Update AirPlay receiver', description: 'Install a newer version if one is available', disabled: !receiverInstalled() },
       { action: 'android.previous', label: 'Previous launcher', description: 'Open the home screen you used before CleanFrame TV' }
     ] }];
   }
@@ -979,7 +982,7 @@
   }
   function receiverState() { return FrameDevice.receiver ? FrameDevice.receiver() : null; }
   function receiverInstalled() { var r = receiverState(); return !!(r && r.installed); }
-  function receiverDescription() { var r = receiverState(); return r && r.text ? r.text : 'Mirror an iPhone or Mac with AirPlay (separate open-source app)'; }
+  function receiverDescription() { var r = receiverState(); return r && r.text ? r.text.replace(/\.? OK (opens it|downloads and installs it)$/, '') : 'Mirror an iPhone or Mac with AirPlay (separate open-source app)'; }
   function receiverHint(update) { var r = receiverState(); return update ? 'Check for a newer version' : r && r.installed ? 'Open the AirPlay receiver' : 'Download and install the AirPlay receiver'; }
   function updatesHint() { var u = FrameDevice.updates ? FrameDevice.updates() : null; return u && u.state === 'pending' ? 'Switch to the new interface now' : 'Check for updates now'; }
   function updatesDescription() {
@@ -1004,7 +1007,7 @@
     out.push({ id: 'add', title: rb.buttons.length ? 'More' : '', items: [{ action: 'buttons.add', label: 'Add a button', description: 'Press a button, then pick what it opens', disabled: !rb.enabled }] });
     return out;
   }
-  function detailParent(t) { return t.group === 'rotation' ? 'Background' : t.group === 'buttons' ? 'Android TV' : 'Settings'; }
+  function detailParent(t) { return t.group === 'rotation' ? 'Background' : (t.group === 'buttons' || t.group === 'airplay') ? 'Android TV' : 'Settings'; }
   function detailRows(t) {
     var rows = [[{ action: 'settings.back', label: detailParent(t) }]];
     detailSections(t).forEach(function (section) {
@@ -1054,8 +1057,9 @@
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
     else if (item.action === 'android.memory') perform('Free up memory', FrameDevice.freeMemory);
     else if (item.action === 'android.updates') perform('Updates', FrameDevice.checkUpdates);
-    else if (item.action === 'android.receiver') perform('AirPlay receiver', FrameDevice.receiverPrimary);
-    else if (item.action === 'android.receiver-update') perform('AirPlay receiver', FrameDevice.receiverUpdate);
+    else if (item.action === 'android.receiver') openAppearance('airplay');
+    else if (item.action === 'receiver.primary') perform('AirPlay receiver', FrameDevice.receiverPrimary);
+    else if (item.action === 'receiver.update') perform('AirPlay receiver', FrameDevice.receiverUpdate);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
     else if (item.action === 'android.buttons') openAppearance('buttons');
     else if (item.action === 'buttons.service') perform('Accessibility settings', FrameDevice.accessibilitySettings);
@@ -1786,7 +1790,7 @@
     setHTML(appearanceStatus, status);
     hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + detailParent(t) : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'android.buttons' ? 'Assign remote buttons'
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
-      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? updatesHint() : selected.action === 'android.receiver' ? receiverHint(false) : selected.action === 'android.receiver-update' ? receiverHint(true) : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
+      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? updatesHint() : selected.action === 'android.receiver' ? 'Open the AirPlay receiver options' : selected.action === 'receiver.primary' ? receiverHint(false) : selected.action === 'receiver.update' ? receiverHint(true) : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
   }
   /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
