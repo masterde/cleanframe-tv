@@ -201,7 +201,7 @@
     return value && typeof value.availMb === 'number' && typeof value.totalMb === 'number' ? value : null;
   }
   function freeMemory(done) { var b = bridge(); if (!b || !b.freeMemory) { result(PREVIEW, done); return; } try { b.freeMemory(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
-  /* Update status {state: 'off'|'current'|'available'|'error', version, text} from the TV, or a labelled sample in the browser preview. */
+  /* Update status {state: 'off'|'current'|'available'|'pending'|'error', version, bundle, text} from the TV, or a labelled sample in the browser preview. */
   function updates() {
     var b = bridge(), value;
     if (!b) return { state: 'preview', version: '', text: 'Preview: the TV checks for updates.' };
@@ -210,6 +210,8 @@
     return value && typeof value === 'object' && typeof value.text === 'string' ? value : null;
   }
   function checkUpdates(done) { var b = bridge(); if (!b || !b.checkUpdates) { result(PREVIEW, done); return; } try { b.checkUpdates(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
+  /* Tells the TV this interface rendered, so a downloaded bundle is kept. No-op in the browser preview and for the built-in interface. */
+  function appReady() { var b = bridge(); if (b && b.appReady) { try { b.appReady(); } catch (e) { /* the shell's watchdog handles a silent page */ } } }
   function openUpload(done) { var b = bridge(); if (!b || !b.openUpload) { result(PREVIEW, done); return; } try { b.openUpload(); result('', done); } catch (e) { result('The TV did not respond. Please try again.', done); } }
   function takeConfig() {
     var b = bridge(), value;
@@ -221,7 +223,7 @@
   window.FrameDevice = {
     primaryApps: primaryApps, brandIds: brandIds, apps: apps, launch: launch, launchApp: launchApp, closeApp: closeApp, settings: settings,
     buttons: buttons, learnButton: learnButton, cancelLearnButton: cancelLearnButton, setButton: setButton, accessibilitySettings: accessibilitySettings,
-    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, updates: updates, checkUpdates: checkUpdates, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
+    previousLauncher: previousLauncher, is24Hour: is24Hour, photos: photos, refreshPhotos: refreshPhotos, refreshSource: refreshSource, pexelsKeywords: pexelsKeywords, orderByKeyword: orderByKeyword, editKeywords: editKeywords, weather: weather, weatherPlace: weatherPlace, prayer: prayer, setPrayerEnabled: setPrayerEnabled, memory: memory, freeMemory: freeMemory, updates: updates, checkUpdates: checkUpdates, appReady: appReady, editWeatherPlace: editWeatherPlace, openUpload: openUpload, photoSource: photoSource,
     takeConfig: takeConfig, android: !!bridge()
   };
 })();

@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.mdrzn.cleanframetv"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
         // Updates are off unless a build is given the public half of the update-signing key (gradle -PupdatePublicKey=<base64 X.509 DER>).
         buildConfigField("String", "UPDATE_PUBLIC_KEY", "\"${providers.gradleProperty("updatePublicKey").getOrElse("")}\"")
         buildConfigField("String", "UPDATE_BASE_URL", "\"${providers.gradleProperty("updateBaseUrl").getOrElse("https://raw.githubusercontent.com/masterde/cleanframe-tv/updates/")}\"")

@@ -32,6 +32,8 @@ class Bridge(private val activity: HomeActivity, private val catalog: AndroidCat
     @JavascriptInterface fun freeMemory() { catalog.freeMemory { freed, avail -> activity.memoryFreed(freed, avail) } }
     @JavascriptInterface fun updatesJson(): String = updates.json()
     @JavascriptInterface fun checkUpdates() { updates.check(manual = true) }
+    /** The interface rendered; a bundle downloaded by an update is trusted from now on. */
+    @JavascriptInterface fun appReady() = activity.runOnUiThread { activity.bundleReady() }
     @JavascriptInterface fun openUpload() = activity.runOnUiThread { activity.openUpload() }
     @JavascriptInterface fun buttonsJson(): String = Buttons.listJson(KeyRemapService.running, catalog.buttons(), ::buttonName)
 

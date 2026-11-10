@@ -12,6 +12,8 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -36,6 +38,11 @@ class HomeActivity : Activity() {
     private lateinit var weather: WeatherFeed
     private lateinit var prayer: PrayerFeed
     private lateinit var updates: UpdateChecker
+    private lateinit var bundles: BundleStore
+    private val handler = Handler(Looper.getMainLooper())
+    private var servedBundle = 0
+    private var generation = 0
+    private var lastRendererGone = 0L
     private lateinit var bridge: Bridge
     private var web: WebView? = null
     private var pageReady = false
@@ -63,7 +70,13 @@ class HomeActivity : Activity() {
         upload = UploadServer(this, photos, pexels) { event("cleanframe:photos-updated") }
         weather = WeatherFeed(this) { event("cleanframe:weather-updated") }
         prayer = PrayerFeed(this, weather) { event("cleanframe:weather-updated") }
-        updates = UpdateChecker(this, BuildConfig.UPDATE_PUBLIC_KEY, BuildConfig.UPDATE_BASE_URL, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME) { text ->
+        val prefs = getSharedPreferences("cleanframe", MODE_PRIVATE)
+        bundles = BundleStore(File(filesDir, "bundles"), object : KeyValue {
+            override fun get(key: String) = prefs.getString(key, null)
+            // commit(): the launch counter must survive the process being killed by a crashing bundle.
+            override fun put(key: String, value: String) { prefs.edit().putString(key, value).commit() }
+        })
+        updates = UpdateChecker(this, BuildConfig.UPDATE_PUBLIC_KEY, BuildConfig.UPDATE_BASE_URL, BuildConfig.VERSION_CODE, BuildConfig.VERSION_NAME, bundles, { runOnUiThread { rebuildWeb() } }) { text ->
             runOnUiThread { android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show() }
         }
         bridge = Bridge(this, catalog, photos, feed, pexels, weather, prayer, updates)
@@ -78,9 +91,14 @@ class HomeActivity : Activity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun createWebView() {
+        // A downloaded bundle is served from app storage; any problem falls back to the interface built into the APK.
+        val builtIn = WebViewAssetLoader.AssetsPathHandler(this)
+        val served = try { bundles.beginLaunch() } catch (e: Exception) { Log.w(AndroidCatalog.TAG, "Bundle lookup failed", e); 0 }
+        servedBundle = served
+        val assets: WebViewAssetLoader.PathHandler = if (served == 0) builtIn else BundlePathHandler(bundles.dir(served), builtIn)
         val loader = WebViewAssetLoader.Builder()
             .setDomain(HOST)
-            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .addPathHandler("/assets/", assets)
             .addPathHandler("/photos/", WebViewAssetLoader.InternalStoragePathHandler(this, photos.root))
             .addPathHandler("/icons/", WebViewAssetLoader.InternalStoragePathHandler(this, File(filesDir, "icons")))
             .build()
@@ -119,10 +137,11 @@ class HomeActivity : Activity() {
 
             override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
                 Log.w(AndroidCatalog.TAG, "WebView renderer gone (crash=${detail.didCrash()}); recreating")
-                (view.parent as? ViewGroup)?.removeView(view)
-                view.destroy()
-                web = null; pageReady = false
-                createWebView()
+                // A bundle that kills the renderer before it is trusted, or twice within a minute, is never served again.
+                val now = System.currentTimeMillis()
+                if (servedBundle != 0 && (servedBundle == bundles.pending || now - lastRendererGone < 60_000)) bundles.markBad(servedBundle)
+                lastRendererGone = now
+                rebuildWeb()
                 return true
             }
         }
@@ -136,6 +155,32 @@ class HomeActivity : Activity() {
         web = view
         view.requestFocus()
         view.loadUrl("https://$HOST/assets/index.html")
+        watchPending(served)
+    }
+
+    /** Tears the page down and builds it again, so a staged bundle is served (or a failed one dropped). */
+    private fun rebuildWeb() {
+        web?.let { (it.parent as? ViewGroup)?.removeView(it); it.destroy() }
+        web = null; pageReady = false
+        createWebView()
+    }
+
+    /** A pending bundle has about 20 seconds to call [bundleReady]; otherwise it is marked bad and the page is rebuilt without it. */
+    private fun watchPending(served: Int) {
+        val mine = ++generation
+        if (served == 0 || served != bundles.pending) return
+        handler.postDelayed({
+            if (mine == generation && bundles.pending == served) {
+                Log.w(AndroidCatalog.TAG, "Interface $served did not report ready; going back")
+                bundles.markBad(served)
+                rebuildWeb()
+            }
+        }, READY_MS)
+    }
+
+    /** Called (on the main thread) when the served page reports that it rendered. */
+    fun bundleReady() {
+        if (bundles.markReady(servedBundle)) Log.i(AndroidCatalog.TAG, "Interface $servedBundle is now the active interface")
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -180,6 +225,7 @@ class HomeActivity : Activity() {
 
     override fun onDestroy() {
         if (forwarded) { super.onDestroy(); return }
+        handler.removeCallbacksAndMessages(null)
         unregisterReceiver(packages)
         feed.close()
         pexels.close()
@@ -290,5 +336,6 @@ class HomeActivity : Activity() {
     companion object {
         const val HOST = "appassets.androidplatform.net"
         const val DEBUG = "debug"
+        const val READY_MS = 20_000L
     }
 }
