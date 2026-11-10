@@ -25,6 +25,7 @@ class UpdateChecker(
     private val notify: (String) -> Unit,
 ) {
     data class Outcome(val state: String, val text: String, val sequence: Long = 0)
+    private class NotPublished : IOException("HTTP 404")
 
     private val executor = Executors.newSingleThreadExecutor()
     private val running = AtomicBoolean(false)
@@ -62,6 +63,10 @@ class UpdateChecker(
                 if (outcome.state != "error") edit.putLong(LAST, System.currentTimeMillis()).putLong(SEQ, maxOf(outcome.sequence, prefs.getLong(SEQ, 0L)))
                 edit.apply()
                 if (manual || outcome.state == "available") notify(outcome.text)
+            } catch (e: NotPublished) {
+                // The updates branch or its files do not exist yet: not an error for the owner.
+                prefs.edit().putString(STATE, "current").putString(TEXT, "Up to date · version $installedName (no updates published)").putLong(LAST, System.currentTimeMillis()).apply()
+                if (manual) notify("No updates have been published yet.")
             } catch (e: Exception) {
                 Log.w(AndroidCatalog.TAG, "Update check failed: ${e.message}")
                 prefs.edit().putString(STATE, "error").putString(TEXT, "Couldn't check. Try again later").apply()
@@ -83,6 +88,7 @@ class UpdateChecker(
         connection.instanceFollowRedirects = false
         connection.setRequestProperty("User-Agent", "CleanFrameTV/$installedName (Android TV launcher)")
         try {
+            if (connection.responseCode == 404) throw NotPublished()
             if (connection.responseCode != 200) throw IllegalStateException("HTTP ${connection.responseCode}")
             if (connection.contentLengthLong > limit) throw IOException("Response too large")
             return connection.inputStream.use { input ->
