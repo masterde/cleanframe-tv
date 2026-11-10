@@ -10,7 +10,7 @@ class WeatherFeedTest {
 
     @Test fun readsTemperatureConditionAndDaylight() {
         val reading = JSONObject(WeatherFeed.readingJson("Bahrain", "Manama", body("""{"temperature_2m":31.6,"weather_code":1,"is_day":0}"""))!!)
-        assertEquals("Manama", reading.getString("place"))
+        assertEquals("what the owner typed wins over the geocoder's spelling", "Bahrain", reading.getString("place"))
         assertEquals(32, reading.getInt("temp"))
         assertEquals(1, reading.getInt("code"))
         assertEquals(false, reading.getBoolean("day"))
@@ -22,6 +22,10 @@ class WeatherFeedTest {
         assertEquals(34, reading.getInt("hi"))
         assertEquals(24, reading.getInt("lo"))
         assertEquals(false, JSONObject(WeatherFeed.readingJson("x", "x", body("""{"temperature_2m":20,"weather_code":0}"""))!!).has("hi"))
+    }
+
+    @Test fun usesTheGeocodersNameOnlyWhenNothingWasTyped() {
+        assertEquals("Manama", JSONObject(WeatherFeed.readingJson("", "Manama", body("""{"temperature_2m":20,"weather_code":0}"""))!!).getString("place"))
     }
 
     @Test fun fallsBackToTheTypedPlaceAndAssumesDaytime() {
