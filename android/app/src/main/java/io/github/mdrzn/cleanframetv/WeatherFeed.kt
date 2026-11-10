@@ -120,7 +120,7 @@ class WeatherFeed(context: Context, private val onUpdated: () -> Unit) {
             val current = body.optJSONObject("current") ?: return null
             if (!current.has("temperature_2m") || !current.has("weather_code")) return null
             val reading = JSONObject()
-                .put("place", wanted.ifEmpty { name })
+                .put("place", name.ifEmpty { wanted })
                 .put("temp", Math.round(current.getDouble("temperature_2m")).toInt())
                 .put("code", current.getInt("weather_code"))
                 .put("day", current.optInt("is_day", 1) == 1)
