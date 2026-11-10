@@ -196,3 +196,12 @@ dev = load(fakeBridge([
 assert.deepEqual(plain(dev.primaryApps()), [{ id: 'it.rainet.androidtv', name: 'RaiPlay', mark: false, appId: 'it.rainet.androidtv', icon: '/icons/r.png' }]);
 assert.ok(plain(dev.brandIds()).indexOf('jellyfin') >= 0);
 console.log('device.js fallback checks passed.');
+
+// Pexels rotation: photos interleave by keyword (newest first inside each), unknown keywords go last.
+dev = load(fakeBridge([]));
+const w = (id, keyword) => ({ id, keyword });
+const mixed = [w('a2', 'Ocean'), w('a1', 'ocean'), w('b2', 'city at night'), w('b1', 'city  at night'), w('c1', 'forest'), w('x1', 'gone'), w('n1')];
+assert.deepEqual(plain(dev.orderByKeyword(mixed, 'ocean, city at night\nmountain')).map((p) => p.id), ['a2', 'b2', 'a1', 'b1', 'c1', 'x1', 'n1']);
+assert.deepEqual(plain(dev.orderByKeyword(mixed, '')).map((p) => p.id), mixed.map((p) => p.id));
+assert.deepEqual(plain(dev.orderByKeyword(null, 'ocean')), []);
+console.log('Pexels keyword rotation checks passed.');

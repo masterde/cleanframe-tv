@@ -14,7 +14,8 @@ import kotlin.random.Random
 
 /**
  * Pexels photos for the owner's keywords, through the owner's search function (which holds the API key).
- * Adds one photo per check (at most every 30 minutes), cycling through the keywords, and keeps the newest [KEEP].
+ * Adds one photo per check (at most every 30 minutes), cycling through the keywords, and keeps the newest [keepFor].
+ * Each photo remembers its keyword so Home can rotate through the keywords, one background per rotation step.
  * Only the function and images.pexels.com are contacted, and only while the source is "pexels".
  */
 class PexelsFeed(private val context: Context, private val photos: Photos, private val onUpdated: () -> Unit) {
@@ -29,14 +30,14 @@ class PexelsFeed(private val context: Context, private val photos: Photos, priva
 
     fun setSource(source: String) { if (source == PEXELS) refresh(force = false) }
 
-    /** New keywords replace the current Pexels photos with up to three fresh ones. */
+    /** New keywords replace the current Pexels photos with one fresh photo per keyword. */
     fun setKeywords(text: String) {
         val clean = parseKeywords(text).joinToString(", ")
         if (clean.isEmpty() || clean == keywords) return
         prefs.edit().putString(KEYWORDS, clean).putInt(NEXT, 0).putLong(CHECKED, 0L).apply()
-        photos.update(PREFIX, KEEP) { it.clear(); true }
+        photos.update(PREFIX, keepFor(parseKeywords(clean).size)) { it.clear(); true }
         onUpdated()
-        executor.execute { running.set(true); try { repeat(minOf(3, parseKeywords(clean).size)) { add() } } catch (e: Exception) { Log.w(AndroidCatalog.TAG, "Pexels photos not updated: ${e.message}") } finally { running.set(false) } }
+        executor.execute { running.set(true); try { repeat(parseKeywords(clean).size) { add() } } catch (e: Exception) { Log.w(AndroidCatalog.TAG, "Pexels photos not updated: ${e.message}") } finally { running.set(false) } }
     }
 
     fun refresh(force: Boolean) {
@@ -66,8 +67,8 @@ class PexelsFeed(private val context: Context, private val photos: Photos, priva
         if (photos.json().contains("-${item.photoId}\"")) return
         try {
             download.writeBytes(get(item.url, MAX_IMAGE))
-            val entry = PhotoMaker.make(download, photos.root, id).entryJson(id, item.title, item.caption, PEXELS)
-            photos.update(PREFIX, KEEP) { it[id] = entry; true }
+            val entry = PhotoMaker.make(download, photos.root, id).entryJson(id, item.title, item.caption, PEXELS, words[index])
+            photos.update(PREFIX, keepFor(words.size)) { it[id] = entry; true }
             Log.i(AndroidCatalog.TAG, "Pexels photo ready: $id (${item.title})")
             onUpdated()
         } finally {
@@ -103,7 +104,10 @@ class PexelsFeed(private val context: Context, private val photos: Photos, priva
     companion object {
         const val PEXELS = "pexels"
         const val PREFIX = "pexels-"
-        const val KEEP = 12
+        private const val MIN_KEEP = 12
+
+        /** Enough photos for two per keyword, never fewer than [MIN_KEEP]. */
+        fun keepFor(keywordCount: Int): Int = maxOf(MIN_KEEP, keywordCount * 2)
         const val ENDPOINT = "https://img.fn.xyz.dev/"
         const val DEFAULT_KEYWORDS = "landscape, nature"
         private const val PAGES = 20

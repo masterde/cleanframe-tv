@@ -35,6 +35,7 @@
   function useSource(source) {
     var list = sourceWalls(source);
     if (WALLS_SOURCE === source && WALLS.length) return;
+    if (source === 'pexels' && list.length && window.FrameDevice && FrameDevice.orderByKeyword) list = FrameDevice.orderByKeyword(list, FrameDevice.pexelsKeywords());
     WALLS = list.length ? list : sourceWalls('builtin'); WALLS_SOURCE = source;
   }
   /* The wall to show when switching source: keep the current one if it belongs, else the newest of that source. */
@@ -937,6 +938,7 @@
       { action: 'android.settings', label: 'TV settings', description: 'Picture, sound, network and inputs' },
       { action: 'android.memory', label: 'Free up memory', description: memoryDescription() },
       { action: 'android.buttons', label: 'Remote buttons', description: buttonsSummary() },
+      { action: 'android.updates', label: 'Updates', description: updatesDescription() },
       { action: 'android.previous', label: 'Previous launcher', description: 'Open the home screen you used before CleanFrame TV' }
     ] }];
   }
@@ -944,6 +946,10 @@
   function memoryDescription() {
     var m = FrameDevice.memory ? FrameDevice.memory() : null;
     return m ? m.availMb + ' MB free of ' + m.totalMb + ' MB. Ends background apps.' : 'Ends apps running in the background';
+  }
+  function updatesDescription() {
+    var u = FrameDevice.updates ? FrameDevice.updates() : null;
+    return u && u.text ? u.text : 'Check for new versions of CleanFrame TV';
   }
   function remoteButtons() { return FrameDevice.buttons ? FrameDevice.buttons() : { enabled: false, buttons: [] }; }
   function buttonsSummary() {
@@ -1012,6 +1018,7 @@
     else if (item.action === 'background.upload') perform('Upload photos', FrameDevice.openUpload);
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
     else if (item.action === 'android.memory') perform('Free up memory', FrameDevice.freeMemory);
+    else if (item.action === 'android.updates') perform('Updates', FrameDevice.checkUpdates);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
     else if (item.action === 'android.buttons') openAppearance('buttons');
     else if (item.action === 'buttons.service') perform('Accessibility settings', FrameDevice.accessibilitySettings);
@@ -1647,7 +1654,7 @@
     setHTML(appearanceStatus, status);
     hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + detailParent(t) : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'android.buttons' ? 'Assign remote buttons'
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
-      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
+      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? 'Check for updates now' : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
   }
   /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
