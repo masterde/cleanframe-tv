@@ -136,4 +136,14 @@ class UpdateManifestTest {
         assertTrue(UpdateChecker.sha256Matches(digest, hex.uppercase()))
         assertFalse(UpdateChecker.sha256Matches(digest, "0".repeat(64)))
     }
+
+    @Test fun theUpdatesRowShowsAWaitingBundleOnlyWhileOneIsWaiting() {
+        assertEquals("off" to "Not set up in this build", UpdateChecker.describe(false, 0, 0, "never", "", "", "0.3.2"))
+        assertEquals("pending" to "Interface 7 is ready · press OK to switch to it", UpdateChecker.describe(true, 7, 6, "pending", "x", "", "0.3.2"))
+        val stale = UpdateChecker.describe(true, 0, 7, "pending", "Interface 7 is ready · press OK to switch to it", " · checked 11 Nov 00:20", "0.3.2")
+        assertEquals("current", stale.first)
+        assertEquals("Up to date · version 0.3.2 · interface 7 · checked 11 Nov 00:20", stale.second)
+        assertEquals("never" to "Version 0.3.2. Not checked yet", UpdateChecker.describe(true, 0, 0, "never", "", "", "0.3.2"))
+        assertEquals("available" to "Update available: interface 8 · checked now", UpdateChecker.describe(true, 0, 7, "available", "Update available: interface 8", " · checked now", "0.3.2"))
+    }
 }

@@ -42,19 +42,9 @@ class UpdateChecker(
 
     /** {"state": off|never|current|available|pending|error, "version", "bundle", "text"} for Settings → Android TV → Updates. */
     fun json(): String {
-        val state = when {
-            !enabled -> "off"
-            store.pending != 0 -> "pending"
-            else -> prefs.getString(STATE, "never") ?: "never"
-        }
         val last = prefs.getLong(LAST, 0L)
-        val interfaceText = if (store.active != 0) " · interface ${store.active}" else ""
-        val text = when {
-            !enabled -> "Not set up in this build"
-            state == "pending" -> "Interface ${store.pending} is ready · press OK to switch to it"
-            state == "never" -> "Version $installedName$interfaceText. Not checked yet"
-            else -> (prefs.getString(TEXT, "") ?: "") + if (last > 0) " · checked " + SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(last)) else ""
-        }
+        val checked = if (last > 0) " · checked " + SimpleDateFormat("d MMM HH:mm", Locale.getDefault()).format(Date(last)) else ""
+        val (state, text) = describe(enabled, store.pending, store.active, prefs.getString(STATE, "never") ?: "never", prefs.getString(TEXT, "") ?: "", checked, installedName)
         return """{"state":${Catalog.quote(state)},"version":${Catalog.quote(installedName)},"bundle":${store.active},"text":${Catalog.quote(text)}}"""
     }
 
@@ -176,6 +166,21 @@ class UpdateChecker(
         private const val TEXT = "updText"
         private const val LAST = "updLast"
         private const val SEQ = "updSeq"
+
+        /**
+         * The state and text for the Updates row. A stored "pending" state outlives the bundle it described (it is cleared once the bundle is
+         * activated), so it is shown as up to date rather than as an interface that is no longer waiting.
+         */
+        fun describe(enabled: Boolean, pending: Int, active: Int, storedState: String, storedText: String, checked: String, installedName: String): Pair<String, String> {
+            val interfaceText = if (active != 0) " · interface $active" else ""
+            return when {
+                !enabled -> "off" to "Not set up in this build"
+                pending != 0 -> "pending" to "Interface $pending is ready · press OK to switch to it"
+                storedState == "pending" -> "current" to "Up to date · version $installedName$interfaceText$checked"
+                storedState == "never" -> "never" to "Version $installedName$interfaceText. Not checked yet"
+                else -> storedState to storedText + checked
+            }
+        }
 
         /** Verifies and interprets the downloaded files. Pure, so it is tested without a network. [seenSequence] is the highest manifest accepted before. */
         fun evaluate(manifest: ByteArray, signature: String, publicKey: String, host: String, installedApk: Int, installedName: String, installedBundle: Int, seenSequence: Long, badBundles: Set<Int> = emptySet()): Outcome {
