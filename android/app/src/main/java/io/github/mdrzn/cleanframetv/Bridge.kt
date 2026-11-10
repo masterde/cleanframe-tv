@@ -8,7 +8,7 @@ import android.webkit.JavascriptInterface
  * window.CleanFrameAndroid — the only surface the web interface sees (app/device.js).
  * Methods are synchronous and run on a WebView binder thread.
  */
-class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed, private val pexels: PexelsFeed, private val weather: WeatherFeed, private val prayer: PrayerFeed, private val updates: UpdateChecker) {
+class Bridge(private val activity: HomeActivity, private val catalog: AndroidCatalog, private val photos: Photos, private val feed: BingFeed, private val pexels: PexelsFeed, private val weather: WeatherFeed, private val prayer: PrayerFeed, private val updates: UpdateChecker, private val receiver: ReceiverInstaller) {
     @Volatile var pendingConfig: String? = null
 
     @JavascriptInterface fun appsJson(): String = Catalog.toJson(catalog.entries())
@@ -34,6 +34,9 @@ class Bridge(private val activity: HomeActivity, private val catalog: AndroidCat
     @JavascriptInterface fun checkUpdates() { updates.check(manual = true) }
     /** The interface rendered; a bundle downloaded by an update is trusted from now on. */
     @JavascriptInterface fun appReady() = activity.runOnUiThread { activity.bundleReady() }
+    @JavascriptInterface fun receiverJson(): String = receiver.json()
+    @JavascriptInterface fun receiverPrimary() { receiver.primary() }
+    @JavascriptInterface fun receiverUpdate() { receiver.update() }
     @JavascriptInterface fun openUpload() = activity.runOnUiThread { activity.openUpload() }
     @JavascriptInterface fun buttonsJson(): String = Buttons.listJson(KeyRemapService.running, catalog.buttons(), ::buttonName)
 

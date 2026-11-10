@@ -967,6 +967,8 @@
       { action: 'android.memory', label: 'Free up memory', description: memoryDescription() },
       { action: 'android.buttons', label: 'Remote buttons', description: buttonsSummary() },
       { action: 'android.updates', label: 'Updates', description: updatesDescription() },
+      { action: 'android.receiver', label: 'AirPlay receiver', description: receiverDescription() },
+      { action: 'android.receiver-update', label: 'Update AirPlay receiver', description: 'Install a newer version if one is available', disabled: !receiverInstalled() },
       { action: 'android.previous', label: 'Previous launcher', description: 'Open the home screen you used before CleanFrame TV' }
     ] }];
   }
@@ -975,6 +977,10 @@
     var m = FrameDevice.memory ? FrameDevice.memory() : null;
     return m ? m.availMb + ' MB free of ' + m.totalMb + ' MB. Ends background apps.' : 'Ends apps running in the background';
   }
+  function receiverState() { return FrameDevice.receiver ? FrameDevice.receiver() : null; }
+  function receiverInstalled() { var r = receiverState(); return !!(r && r.installed); }
+  function receiverDescription() { var r = receiverState(); return r && r.text ? r.text : 'Mirror an iPhone or Mac with AirPlay (separate open-source app)'; }
+  function receiverHint(update) { var r = receiverState(); return update ? 'Check for a newer version' : r && r.installed ? 'Open the AirPlay receiver' : 'Download and install the AirPlay receiver'; }
   function updatesHint() { var u = FrameDevice.updates ? FrameDevice.updates() : null; return u && u.state === 'pending' ? 'Switch to the new interface now' : 'Check for updates now'; }
   function updatesDescription() {
     var u = FrameDevice.updates ? FrameDevice.updates() : null;
@@ -1048,6 +1054,8 @@
     else if (item.action === 'android.settings') perform('TV settings', FrameDevice.settings);
     else if (item.action === 'android.memory') perform('Free up memory', FrameDevice.freeMemory);
     else if (item.action === 'android.updates') perform('Updates', FrameDevice.checkUpdates);
+    else if (item.action === 'android.receiver') perform('AirPlay receiver', FrameDevice.receiverPrimary);
+    else if (item.action === 'android.receiver-update') perform('AirPlay receiver', FrameDevice.receiverUpdate);
     else if (item.action === 'android.previous') perform('Previous launcher', FrameDevice.previousLauncher);
     else if (item.action === 'android.buttons') openAppearance('buttons');
     else if (item.action === 'buttons.service') perform('Accessibility settings', FrameDevice.accessibilitySettings);
@@ -1778,7 +1786,7 @@
     setHTML(appearanceStatus, status);
     hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + detailParent(t) : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'android.buttons' ? 'Assign remote buttons'
       : selected.action === 'buttons.add' ? 'Then press the remote button' : selected.action.indexOf('buttons.edit.') === 0 ? 'Change or remove this button'
-      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? updatesHint() : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
+      : selected.action === 'android.memory' ? 'Free memory now' : selected.action === 'android.updates' ? updatesHint() : selected.action === 'android.receiver' ? receiverHint(false) : selected.action === 'android.receiver-update' ? receiverHint(true) : selected.action === 'buttons.service' ? 'Open Accessibility settings' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
   }
   /* Pages taller than their list (Background) scroll so the focused row stays clear of the title and the OK hint. */
@@ -2267,6 +2275,8 @@
   window.addEventListener('cleanframe:apps-changed', function () { refreshCatalog(); });
   /* New Bing photos: rebuild the lists; move off a photo that left the cache or a built-in fallback. */
   window.addEventListener('cleanframe:weather-updated', function () { updateClock(); });
+  /* Update and AirPlay receiver progress: redraw so the Settings rows show the new state. */
+  window.addEventListener('cleanframe:status-changed', function () { render(); });
   window.addEventListener('cleanframe:photos-updated', function () {
     var current = wall(S.c.wall), target;
     setPhotos(FrameDevice.photos ? FrameDevice.photos() : []); useSource(S.c.source);

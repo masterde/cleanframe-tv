@@ -29,6 +29,7 @@ class UpdateChecker(
     private val store: BundleStore,
     private val apply: () -> Unit,
     private val notify: (String) -> Unit,
+    private val changed: () -> Unit = {},
 ) {
     data class Outcome(val state: String, val text: String, val sequence: Long = 0, val bundle: UpdateManifest.Bundle? = null)
     private class NotPublished : IOException("HTTP 404")
@@ -79,14 +80,17 @@ class UpdateChecker(
                 if (outcome.state != "error") edit.putLong(LAST, System.currentTimeMillis()).putLong(SEQ, maxOf(outcome.sequence, prefs.getLong(SEQ, 0L)))
                 edit.apply()
                 if (manual || outcome.state == "available" || outcome.state == "pending") notify(outcome.text)
+                changed()
             } catch (e: NotPublished) {
                 // The updates branch or its files do not exist yet: not an error for the owner.
                 prefs.edit().putString(STATE, "current").putString(TEXT, "Up to date · version $installedName (no updates published)").putLong(LAST, System.currentTimeMillis()).apply()
                 if (manual) notify("No updates have been published yet.")
+                changed()
             } catch (e: Exception) {
                 Log.w(AndroidCatalog.TAG, "Update check failed: ${e.message}")
                 prefs.edit().putString(STATE, "error").putString(TEXT, "Couldn't check. Try again later").apply()
                 if (manual) notify("Couldn't check for updates. Try again later.")
+                changed()
             } finally {
                 running.set(false)
             }
