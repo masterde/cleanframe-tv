@@ -65,7 +65,6 @@ class ReceiverInstaller(
     fun update() = installLatest(updateOnly = true)
 
     private fun installLatest(updateOnly: Boolean) {
-        if (!canInstall()) return
         if (!running.compareAndSet(false, true)) return
         note = ""
         executor.execute {
@@ -77,6 +76,8 @@ class ReceiverInstaller(
                 if (updateOnly && have != null && !isNewer(release.version, have)) {
                     note = "Up to date · version $have"; notify("The AirPlay receiver is up to date."); return@execute
                 }
+                // Only now, when something will actually be installed, ask for the "Install unknown apps" permission.
+                if (!canInstall()) return@execute
                 busyText = "Downloading ${release.version}…"; changed()
                 download(release, cache)
                 verify(release, cache)
@@ -93,7 +94,7 @@ class ReceiverInstaller(
         }
     }
 
-    /** Android asks for "Install unknown apps" per app; send the owner to that screen once. */
+    /** Android asks for "Install unknown apps" per app; send the owner to that screen once. Called only when an install is about to happen, never for a plain check. */
     private fun canInstall(): Boolean {
         if (Build.VERSION.SDK_INT < 26 || context.packageManager.canRequestPackageInstalls()) return true
         notify("Allow CleanFrame TV to install apps, then press OK again.")
