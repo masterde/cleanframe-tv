@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "python3 scripts/preview.py",
     "dev:public": "python3 scripts/preview.py --public-fonts",
-    "check": "node --check app/main.js && node --check app/device.js && node scripts/test-device.mjs && python3 scripts/check.py",
+    "check": "node --check app/main.js && node --check app/device.js && node scripts/test-device.mjs && node scripts/test-release-update.mjs && python3 scripts/check.py",
     "check:browser": "node scripts/check-browser.mjs",
     "android:build": "cd android && ./gradlew assembleRelease"
   },
