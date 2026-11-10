@@ -1369,6 +1369,15 @@
     return '<span class="ic-title">' + weatherIcon(w.code, w.day) + '<span>' + esc(weatherLine(w)) + '</span></span>' + infoRows(rows) + (w.place ? '<span class="ic-note">' + esc(w.place) + '</span>' : '');
   }
   function weatherPlaceLine() { var w = FrameDevice.weather ? FrameDevice.weather() : null; return w && w.place ? w.place : ''; }
+  /* The dock's glass: its pre-blurred photo (IMG.mat) behind the material veil, lined up with the screen so a tile at (x, y) shows the same pixels as the photo behind it. */
+  function matGlass(el) {
+    var src = IMG.mat && IMG.mat.src, x = el.offsetLeft, y = el.offsetTop, p = el.offsetParent;
+    if (S.c.bg !== 'photo' || !src) { el.style.backgroundImage = ''; return; }
+    while (p && p !== stage) { x += p.offsetLeft; y += p.offsetTop; p = p.offsetParent; }
+    el.style.backgroundImage = 'linear-gradient(var(--veil),var(--veil)),url("' + src + '")';
+    el.style.backgroundPosition = '0 0,' + (-x) + 'px ' + (-y) + 'px';
+    el.style.backgroundSize = 'auto,1920px 1080px';
+  }
   function renderInfo(hs) {
     var I = infoItems(), layout = infoLayout(), html = '', id, tile, x, w;
     infoEl.className = 'info info-' + layout + (hs.zone === 'info' ? ' is-awake' : '');
@@ -1379,6 +1388,7 @@
     });
     setHTML(infoEl, html);
     if (layout === 'bar' && utilsEl.offsetLeft > 0) infoEl.style.right = (1920 - utilsEl.offsetLeft + 12) + 'px';
+    Array.prototype.forEach.call(infoEl.children, matGlass);
     id = hs.zone === 'info' ? I[hs.n] : null;
     if (!id || !(S.c.expand === 'focus' || hs.open === id)) return;
     setHTML(infoCard, infoCardHtml(id));
@@ -1388,6 +1398,7 @@
     x = clamp(infoEl.offsetLeft + tile.offsetLeft, 100, 1920 - 100 - w);
     infoCard.style.left = x + 'px';
     infoCard.className = 'info-card is-on info-card-' + layout;
+    matGlass(infoCard);
   }
   /* Night mode (Auto): from sunset to sunrise by the weather, else 22:00 to 06:00. */
   function nightNow() {

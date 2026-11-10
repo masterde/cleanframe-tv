@@ -677,3 +677,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .bg-photo.db-quiet.m-frost .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.24),rgba(255,255,255,0) 52%,rgba(12,10,8,.08))}
 .bg-photo.db-quiet.m-soft .info-tile.is-focus::before,.bg-photo.db-quiet.m-tint .info-tile.is-focus::before{background:linear-gradient(170deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 52%,rgba(255,255,255,.08))}
 .bg-dark .info-tile,.bg-light .info-tile{--veil:transparent;box-shadow:none;text-shadow:none}
+.info-card{--veil:rgba(8,14,18,.3);background-repeat:no-repeat}
+.tone-light .info-card{--veil:rgba(8,14,18,.4)}
+.info-tile{background-repeat:no-repeat}
+.registered-material .info-tile,.registered-material .info-card{--veil:transparent}
+.m-tint .info-card{--veil:rgba(8,14,18,.3)}
+.tone-light.m-tint .info-card{--veil:rgba(8,14,18,.38)}
+.m-frost .info-card{--veil:rgba(12,10,8,var(--fv,.12))}
+.bg-dark .info-card,.bg-light .info-card{--veil:transparent}
