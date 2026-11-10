@@ -1365,8 +1365,18 @@
       return '<span class="ic-title">' + esc(prayerText()) + '</span>' + infoRows(rows) + (weatherPlaceLine() ? '<span class="ic-note">' + esc(weatherPlaceLine()) + '</span>' : '');
     }
     w = FrameDevice.weather();
-    if (typeof w.hi === 'number' && typeof w.lo === 'number') rows.push(['High', degrees(w.hi), false], ['Low', degrees(w.lo), false]);
-    return '<span class="ic-title">' + weatherIcon(w.code, w.day) + '<span>' + esc(weatherLine(w)) + '</span></span>' + infoRows(rows) + (w.place ? '<span class="ic-note">' + esc(w.place) + '</span>' : '');
+    return '<span class="ic-title">' + weatherIcon(w.code, w.day) + '<span>' + esc(weatherLine(w)) + '</span></span>' + weatherRows(w) + (w.place ? '<span class="ic-note">' + esc(w.place) + '</span>' : '');
+  }
+  /* Today's range, then the next days when the TV sent them (app 0.3.1 and later); older apps only have today's high and low. */
+  function weatherRows(w) {
+    var html = '', range = typeof w.hi === 'number' && typeof w.lo === 'number';
+    if (range) html += '<span class="ic-row"><span>Today</span><span>' + esc(degrees(w.lo) + '–' + degrees(w.hi)) + '</span></span>';
+    (Array.isArray(w.days) ? w.days : []).forEach(function (d, i) {
+      var p = String(d && d.d).split('-'), name = i === 0 ? 'Tomorrow' : DAYS[new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+      if (typeof d.code !== 'number' || typeof d.hi !== 'number' || typeof d.lo !== 'number' || !name) return;
+      html += '<span class="ic-row"><span>' + esc(name) + '</span><span class="ic-day">' + weatherIcon(d.code, true) + esc(degrees(d.lo) + '–' + degrees(d.hi)) + '</span></span>';
+    });
+    return html;
   }
   function weatherPlaceLine() { var w = FrameDevice.weather ? FrameDevice.weather() : null; return w && w.place ? w.place : ''; }
   /* The dock's glass: its pre-blurred photo (IMG.mat) behind the material veil, lined up with the screen so a tile at (x, y) shows the same pixels as the photo behind it. */
