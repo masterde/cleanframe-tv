@@ -541,7 +541,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .detail-background .setting-choice{min-height:74px}
 .detail-background .is-horizontal .setting-choice{min-height:80px}
 .detail-typography .setting-choice,.detail-rotation .setting-choice{min-height:88px}
-.detail-typography .appearance-rows,.detail-rotation .appearance-rows,.detail-android .appearance-rows,.detail-buttons .appearance-rows{top:260px}
+.detail-typography .appearance-rows,.detail-rotation .appearance-rows,.detail-android .appearance-rows,.detail-buttons .appearance-rows,.detail-airplay .appearance-rows{top:260px}
 .setting-choice.has-description{min-height:120px}
 .setting-description{font-size:26px;line-height:36px;font-weight:400;letter-spacing:0;color:var(--mute);white-space:normal}
 .setting-choice.is-focus .setting-description{color:var(--solid-mute)}
